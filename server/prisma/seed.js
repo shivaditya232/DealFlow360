@@ -79,6 +79,16 @@ async function main() {
         },
     });
 
+    await prisma.user.create({
+        data: {
+            companyId: company.id,
+            email: 'admin@acme.com',
+            passwordHash: '$2a$10$x5r63U.FoW5G2ZWEd1H23O8O.61C2RLiuD6uvb1s3EwweA8PXceEa', // Admin@123
+            name: 'Admin',
+            role: UserRole.ADMIN,
+        },
+    });
+
     // 3. Customers
     const customer = await prisma.customer.create({
         data: {

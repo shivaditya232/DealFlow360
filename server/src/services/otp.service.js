@@ -12,9 +12,9 @@ const MAX_VERIFY_ATTEMPTS = 5;        // Max 5 wrong guesses before OTP is burne
 
 // ── Redis key helpers ─────────────────────────────────────────────────────────
 
-const otpKey        = (email) => `otp:${email}`;
-const attemptKey    = (email) => `otp:attempts:${email}`;
-const requestRlKey  = (email) => `otp:request-rl:${email}`;
+const otpKey = (email) => `otp:${email}`;
+const attemptKey = (email) => `otp:attempts:${email}`;
+const requestRlKey = (email) => `otp:request-rl:${email}`;
 
 // ── OTP generation ────────────────────────────────────────────────────────────
 
