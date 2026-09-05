@@ -1,21 +1,32 @@
 import prisma from "../config/prisma.js";
 import { httpError } from "../utils/httpError.js";
 import { broadcast } from "../sockets/index.js";
-import { triggerFulfillment, triggerBilling } from "./fulfillment.service.js";
 
 // ─── List pending approvals for a rep/finance user ────────────────────────────
 
 /**
  * Returns quotations that have a pending ApprovalStep matching the caller's role.
  * Only shows the NEXT unacted step per quotation (lowest stepOrder with status=PENDING).
+ *
+ * Bug fix: approval.routes.js authorizes MANAGER, FINANCE, *and* ADMIN to hit
+ * these endpoints, but this query used to filter strictly by
+ * `approverRole: role` — since ApprovalStep.approverRole is only ever
+ * "MANAGER" or "FINANCE" (see approvalRouter.js), an ADMIN account could never
+ * see anything here even though the route let them in and actOnApproval below
+ * never checked the role either. An ADMIN is meant to be able to act on any
+ * pending step (that's the whole point of granting them route access), so for
+ * ADMIN we drop the approverRole filter and show every pending step company-wide.
  */
 export async function listPendingApprovals(approverId, companyId, role) {
-  // Find quotations with a PENDING step that matches this role
+  const roleFilter = role === "ADMIN" ? {} : { approverRole: role };
+
+  // Find quotations with a PENDING step that matches this role (or, for
+  // ADMIN, any pending step at all — see comment above).
   const steps = await prisma.approvalStep.findMany({
     where: {
       quotation: { companyId },
-      approverRole: role,
       status: "PENDING",
+      ...roleFilter,
     },
     include: {
       quotation: {
@@ -175,10 +186,22 @@ export async function actOnApproval(approverId, companyId, quotationId, { action
     return { quotationId, status: "PENDING_APPROVAL", nextStep: nextStep.approverRole };
   }
 
-  // All steps done → CONFIRMED
+  // All internal approval steps done → APPROVED, not CONFIRMED.
+  //
+  // Bug fix: this used to jump straight to CONFIRMED here, which finalized
+  // the deal on the company's internal say-so alone and skipped the customer
+  // entirely — a quotation that needed Manager/Finance sign-off would clear
+  // approval and land in the portal already CONFIRMED, so the customer could
+  // never negotiate or even explicitly accept it (assertQuotationNegotiable
+  // only allows APPROVED/NEGOTIATING; CONFIRMED is read-only on purpose).
+  // A quotation that DIDN'T need approval already goes to APPROVED (see the
+  // steps.length === 0 branch in quotation.service.js), which the customer
+  // can then negotiate or accept via acceptQuotation/confirmQuotation in
+  // portal.service.js. This makes the two paths consistent: internal
+  // approval opens the door, only the customer's own acceptance confirms it.
   await prisma.quotation.update({
     where: { id: quotationId },
-    data: { status: "CONFIRMED", lastActivityAt: now },
+    data: { status: "APPROVED", lastActivityAt: now },
   });
 
   await prisma.auditLog.create({
@@ -187,27 +210,26 @@ export async function actOnApproval(approverId, companyId, quotationId, { action
       userId: approverId,
       entityType: "Quotation",
       entityId: quotationId,
-      action: "CONFIRMED",
-      metadata: { confirmedViaApproval: true, finalApprover: approverId },
+      action: "APPROVED",
+      metadata: { approvedViaChain: true, finalApprover: approverId },
     },
   });
 
   broadcast(quotationId, {
-    event: "QUOTATION_CONFIRMED",
+    event: "QUOTATION_APPROVED",
     quotationId,
-    confirmedBy: approverId,
-    confirmedByType: "APPROVER",
+    approvedBy: approverId,
   });
 
-  // Fire fulfillment + billing — fire-and-forget, errors logged but don't roll back approval
-  triggerFulfillment(companyId, quotationId).catch((e) =>
-    console.error(`[fulfillment] quotation ${quotationId}:`, e.message)
-  );
-  triggerBilling(companyId, quotationId).catch((e) =>
-    console.error(`[billing] quotation ${quotationId}:`, e.message)
-  );
-
-  return { quotationId, status: "CONFIRMED" };
+  // NOTE: fulfillment/billing are NOT fired here. main's version used to fire
+  // them at this point and return status "CONFIRMED", but this session's bug
+  // fix changed final-step approval to land on "APPROVED" (not "CONFIRMED") so
+  // the customer still gets to negotiate/accept in the portal — see the long
+  // comment above this block. Fulfillment/billing now only fire once the
+  // quotation actually reaches CONFIRMED, which happens via the customer's own
+  // acceptance in portal.service.js (acceptQuotation / executeAcceptFlow),
+  // where the merged-in triggerFulfillment/triggerBilling calls already live.
+  return { quotationId, status: "APPROVED" };
 }
 
 // ─── Detail view for the Approval Detail screen ────────────────────────────

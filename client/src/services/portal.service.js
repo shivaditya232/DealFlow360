@@ -38,6 +38,9 @@ export const portalService = {
 
   getBilling: async () =>
     (await api.get('/portal/billing')).data,
+
+  customerRejectProposal: async (proposalId, message) =>
+    (await api.post(`/portal/proposals/${proposalId}/reject`, { message: message || null })).data,
 };
 
 export default portalService;

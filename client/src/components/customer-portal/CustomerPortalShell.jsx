@@ -3,6 +3,7 @@ import CustomerSidebar from './CustomerSidebar';
 import CustomerTopbar from './CustomerTopbar';
 import PortalOverview from './PortalOverview';
 import PortalQuotations from './PortalQuotations';
+import PortalQuotationDetail from './PortalQuotationDetail';
 import PortalOrders from './PortalOrders';
 import PortalBilling from './PortalBilling';
 import PortalProfileView from './PortalProfileView';
@@ -22,7 +23,9 @@ import PortalProfileView from './PortalProfileView';
  * View routing:
  *   Internal SPA pane switching — no extra React Router routes.
  *   The portal is one protected route: /portal
- *   Content panes are switched via `activeView` state.
+ *   Content panes are switched via `activeView` state. A quotation card
+ *   click drills into `PortalQuotationDetail` (tracked separately via
+ *   `selectedQuotationId`) without leaving the Quotations pane.
  *
  * Theming:
  *   The `df-portal` class scopes the CSS custom properties defined in
@@ -61,6 +64,7 @@ function useMediaQuery(query) {
 
 export default function CustomerPortalShell() {
   const [activeView, setActiveView] = useState('overview');
+  const [selectedQuotationId, setSelectedQuotationId] = useState(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
@@ -71,17 +75,31 @@ export default function CustomerPortalShell() {
 
   const handleNavigate = (view) => {
     setActiveView(view);
+    setSelectedQuotationId(null); // leaving a pane (or re-entering it) resets any open detail view
     if (isMobile) setSidebarOpen(false); // auto-close on mobile after navigation
   };
 
+  const openQuotation = (id) => {
+    setActiveView('quotations');
+    setSelectedQuotationId(id);
+  };
+
   const renderView = () => {
+    if (activeView === 'quotations' && selectedQuotationId) {
+      return (
+        <PortalQuotationDetail
+          quotationId={selectedQuotationId}
+          onBack={() => setSelectedQuotationId(null)}
+        />
+      );
+    }
     switch (activeView) {
-      case 'overview':   return <PortalOverview onNavigate={handleNavigate} />;
-      case 'quotations': return <PortalQuotations />;
+      case 'overview':   return <PortalOverview onNavigate={handleNavigate} onOpenQuotation={openQuotation} />;
+      case 'quotations': return <PortalQuotations onOpenQuotation={openQuotation} />;
       case 'orders':     return <PortalOrders />;
       case 'billing':    return <PortalBilling />;
       case 'profile':    return <PortalProfileView />;
-      default:           return <PortalOverview onNavigate={handleNavigate} />;
+      default:           return <PortalOverview onNavigate={handleNavigate} onOpenQuotation={openQuotation} />;
     }
   };
 
@@ -143,7 +161,7 @@ export default function CustomerPortalShell() {
       }}>
         {/* Topbar */}
         <CustomerTopbar
-          title={VIEW_TITLES[activeView] || 'Customer Portal'}
+          title={selectedQuotationId ? 'Quotation Detail' : (VIEW_TITLES[activeView] || 'Customer Portal')}
           onToggleSidebar={() => setSidebarOpen(o => !o)}
           sidebarOpen={sidebarOpen}
         />

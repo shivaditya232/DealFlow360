@@ -469,6 +469,72 @@ export async function customerAcceptProposal(customerId, companyId, proposalId) 
   return executeAcceptFlow(customerId, "CUSTOMER", companyId, proposal.quotationId, proposalId);
 }
 
+// ─── Customer: reject the rep's counter-offer outright ────────────────────────
+
+/**
+ * Customer declines the rep's current counter-offer with no counter-discount
+ * attached — just a plain reject, optionally carrying a message the rep will
+ * see in the negotiation thread. Mirrors the REP-side REJECT branch of
+ * respondToProposal below, but scoped to the customer (ownership-checked,
+ * like customerAcceptProposal) rather than reusing that shared endpoint,
+ * which has no customerId ownership check and would let any customer in the
+ * company act on any other customer's proposal.
+ *
+ * Quotation stays NEGOTIATING (same as when a rep rejects a customer's
+ * proposal) so the customer can still send a fresh counter afterwards if
+ * they want to keep negotiating instead of walking away.
+ */
+export async function customerRejectProposal(customerId, companyId, proposalId, { message } = {}) {
+  const proposal = await prisma.negotiationProposal.findUnique({
+    where: { id: proposalId },
+    include: { quotation: true },
+  });
+
+  if (!proposal || proposal.quotation.companyId !== companyId) {
+    throw httpError(404, "Proposal not found");
+  }
+  if (proposal.quotation.customerId !== customerId) {
+    throw httpError(403, "Access denied");
+  }
+  if (proposal.status !== "PENDING") {
+    throw httpError(409, `Proposal is already ${proposal.status}`);
+  }
+  if (proposal.proposedByType !== "REP") {
+    throw httpError(409, "Only the receiving party can reject — this proposal was made by you");
+  }
+
+  const now = new Date();
+
+  await prisma.$transaction([
+    prisma.negotiationProposal.update({
+      where: { id: proposalId },
+      data: { status: "REJECTED", respondedAt: now },
+    }),
+    prisma.auditLog.create({
+      data: {
+        companyId,
+        entityType: "NegotiationProposal",
+        entityId: proposalId,
+        action: "REJECTED",
+        metadata: { respondedBy: customerId, respondedByType: "CUSTOMER", message, quotationId: proposal.quotationId },
+      },
+    }),
+  ]);
+
+  await redis.del(`proposal:expire:${proposalId}`);
+
+  broadcast(proposal.quotationId, {
+    event: "PROPOSAL_REJECTED",
+    quotationId: proposal.quotationId,
+    proposalId,
+    rejectedBy: customerId,
+    rejectedByType: "CUSTOMER",
+    message,
+  });
+
+  return { proposalId, status: "REJECTED" };
+}
+
 // ─── Core: atomic accept-flow ─────────────────────────────────────────────────
 
 /**
@@ -507,16 +573,40 @@ export async function executeAcceptFlow(actorId, actorType, companyId, quotation
   if (proposal.lineId && proposal.line) {
     if (changes.discountPercent !== undefined) oldValues.discountPercent = Number(proposal.line.discountPercent);
     if (changes.quantity !== undefined) oldValues.quantity = proposal.line.quantity;
+  } else if (!proposal.lineId && changes.discountPercent !== undefined) {
+    // Order-level proposal (lineId === null) — record the pre-change discount
+    // of every line so the audit trail shows what actually moved.
+    const linesBefore = await prisma.quotationLine.findMany({
+      where: { quotationId },
+      select: { discountPercent: true },
+    });
+    oldValues.discountPercent = linesBefore.map((l) => Number(l.discountPercent));
   }
 
   // ── Atomic transaction ──────────────────────────────────────────────────────
   await prisma.$transaction(async (tx) => {
     // Step 1: Apply changes to QuotationLine
+    //
+    // Bug fix: a proposal with `lineId: null` is an ORDER-LEVEL proposal (see
+    // the NegotiationProposal.lineId comment in schema.prisma — "null =
+    // order-level proposal, e.g. change total order discount"). This block
+    // used to only run `if (proposal.lineId && ...)`, so accepting an
+    // order-level proposal (which is exactly what the customer portal's
+    // "Propose Changes" form sends — it has no per-line UI, only a single
+    // order-wide discount field) silently did nothing: the proposal flipped
+    // to ACCEPTED and the quotation to CONFIRMED, but every line's
+    // discountPercent — and therefore the total — was left untouched.
     if (proposal.lineId && Object.keys(changes).length > 0) {
       const lineUpdate = {};
       if (changes.discountPercent !== undefined) lineUpdate.discountPercent = changes.discountPercent;
       if (changes.quantity !== undefined) lineUpdate.quantity = changes.quantity;
       await tx.quotationLine.update({ where: { id: proposal.lineId }, data: lineUpdate });
+    } else if (!proposal.lineId && changes.discountPercent !== undefined) {
+      // Order-level: apply the negotiated discount to every line on this quotation.
+      await tx.quotationLine.updateMany({
+        where: { quotationId },
+        data: { discountPercent: changes.discountPercent },
+      });
     }
 
     // Step 2: AuditLog — old value → new value, who proposed, who accepted
@@ -549,7 +639,8 @@ export async function executeAcceptFlow(actorId, actorType, companyId, quotation
     const newScore = await computeBlendedRiskScore(
       companyId,
       quotationId,
-      proposal.quotation.customer?.tier ?? "BRONZE"
+      proposal.quotation.customer?.tier ?? "BRONZE",
+      tx
     );
 
     const approvalSteps = await resolveApprovalSteps(companyId, newScore);

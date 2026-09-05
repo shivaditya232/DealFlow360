@@ -1,9 +1,9 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, FileText, ShieldCheck, Activity, BarChart3, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, ShieldCheck, Activity, BarChart3, Settings, Package, Users, LogOut } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
-import { APPROVALS_ROLES } from '../../config/roleAccess';
+import { APPROVALS_ROLES, PRODUCTS_ROLES, TEAM_ROLES } from '../../config/roleAccess';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,6 +12,8 @@ const NAV_ITEMS = [
   { to: '/deal-health', label: 'Deal Health', icon: Activity },
   { to: '/reports', label: 'Reports', icon: BarChart3, roles: APPROVALS_ROLES },
   { to: '/admin', label: 'Admin & Stock', icon: Settings, roles: ['ADMIN'] },
+  { to: '/products', label: 'Products', icon: Package, roles: PRODUCTS_ROLES },
+  { to: '/team', label: 'Team', icon: Users, roles: TEAM_ROLES },
 ];
 
 function initials(name = '') {

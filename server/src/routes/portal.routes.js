@@ -7,6 +7,7 @@ import {
   confirmQuotation,
   createProposal,
   customerAcceptProposal,
+  rejectProposal,
   repRespondToProposal,
   getProfile,
   getOrders,
@@ -46,6 +47,10 @@ router.post("/quotations/:id/proposals", createProposal);
 // ── Customer: accept a rep's counter-proposal ────────────────────────────────
 // POST /api/portal/proposals/:proposalId/accept
 router.post("/proposals/:proposalId/accept", customerAcceptProposal);
+
+// ── Customer: reject the rep's counter-offer outright (no counter attached) ──
+// POST /api/portal/proposals/:proposalId/reject
+router.post("/proposals/:proposalId/reject", rejectProposal);
 
 // ── Rep: respond to a customer proposal ──────────────────────────────────────
 // POST /api/portal/proposals/:proposalId/respond  (ACCEPT | REJECT | COUNTER)

@@ -23,7 +23,7 @@ import ActivityTimeline from './ActivityTimeline';
 const ACTIVE_STATUSES = ['APPROVED', 'NEGOTIATING', 'PENDING_APPROVAL'];
 const PENDING_STATUSES = ['NEGOTIATING', 'PENDING_APPROVAL'];
 
-export default function PortalOverview({ onNavigate }) {
+export default function PortalOverview({ onNavigate, onOpenQuotation }) {
   const { customer } = useAuth();
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -231,7 +231,7 @@ export default function PortalOverview({ onNavigate }) {
               {pendingQuotations.slice(0, 5).map(q => (
                 <button
                   key={q.id}
-                  onClick={() => onNavigate('quotations')}
+                  onClick={() => onOpenQuotation ? onOpenQuotation(q.id) : onNavigate('quotations')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

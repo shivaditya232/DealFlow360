@@ -57,7 +57,7 @@ function StatusTabs({ activeStatus, onChange }) {
   );
 }
 
-export default function PortalQuotations() {
+export default function PortalQuotations({ onOpenQuotation }) {
   const [activeStatus, setActiveStatus] = useState(undefined);
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +146,7 @@ export default function PortalQuotations() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {quotations.map(q => (
-            <QuotationPreviewCard key={q.id} quotation={q} onClick={() => {}} />
+            <QuotationPreviewCard key={q.id} quotation={q} onClick={() => onOpenQuotation?.(q.id)} />
           ))}
         </div>
       )}
