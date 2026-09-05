@@ -14,6 +14,7 @@ import ApprovalDetail from './pages/approvals/ApprovalDetail';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleGuard from './routes/RoleGuard';
+import AppShell from './components/layout/AppShell';
 
 // Internal roles that can reach the rep workspace (Dashboard/Quotations);
 // /approvals narrows further to Manager/Finance/Admin via a nested RoleGuard.
@@ -96,3 +97,4 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
