@@ -22,6 +22,8 @@ app.use(express.json());
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
+
+app.use("/api/otp", otpRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/dashboard", dashboardRoutes);
