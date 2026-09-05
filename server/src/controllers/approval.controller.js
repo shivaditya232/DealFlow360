@@ -26,3 +26,13 @@ export async function actOnApproval(req, res, next) {
     next(err);
   }
 }
+
+export async function getApprovalDetail(req, res, next) {
+  try {
+    const { companyId } = req.auth;
+    const result = await approvalService.getApprovalDetail(companyId, req.params.quotationId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

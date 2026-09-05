@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Mail, 
@@ -16,6 +16,7 @@ import authService from '../../services/auth.service';
 import { validateLoginForm, validateLoginField } from '../../validators/auth.validator';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     companySlug: '',
     email: '',
@@ -113,9 +114,21 @@ export default function Login() {
         type: 'success',
         message: 'Sign in successful. Redirecting...',
       });
+
+      // Internal users land on the Sales Dashboard; the customer portal
+      // isn't built yet, so a CUSTOMER login stays here for now rather than
+      // navigating into a route that doesn't exist.
+      if (response?.landing === 'DASHBOARD') {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error) {
       const status = error.response ? error.response.status : null;
-      if (status === 401) {
+      if (error.isOffline) {
+        setSubmitFeedback({
+          type: 'error',
+          message: "You're offline — check your connection and try again.",
+        });
+      } else if (status === 401) {
         setSubmitFeedback({
           type: 'error',
           message: 'Invalid company, email, or password.',

@@ -149,14 +149,12 @@ export default function SignupForm({ onSubmitSuccess }) {
     console.log('[DealFlow360 Signup] Valid form submission prepared with Zod:', payload);
 
     try {
-      let response;
-      try {
-        response = await authService.signup(payload);
-      } catch (apiErr) {
-        if (apiErr.response) {
-          throw apiErr;
-        }
-      }
+      // Previously a network error here (no err.response — offline, dropped
+      // connection) fell through silently and this still reported "Account
+      // created successfully" + redirected to /login, even though the
+      // signup never reached the server. Any failure — network or server —
+      // now goes to the catch block below and is reported honestly.
+      const response = await authService.signup(payload);
 
       setSubmitFeedback({
         type: 'success',
@@ -171,10 +169,12 @@ export default function SignupForm({ onSubmitSuccess }) {
         navigate('/login');
       }, 1500);
     } catch (err) {
-      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      const message = err.isOffline
+        ? "You're offline — check your connection and try again."
+        : err.response?.data?.message || err.response?.data?.error || 'Registration request could not be completed. Please try again.';
       setSubmitFeedback({
         type: 'error',
-        message: serverMsg || 'Registration request could not be completed. Please try again.',
+        message,
       });
     } finally {
       setIsSubmitting(false);

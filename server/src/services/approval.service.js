@@ -200,3 +200,67 @@ export async function actOnApproval(approverId, companyId, quotationId, { action
 
   return { quotationId, status: "CONFIRMED" };
 }
+
+// ─── Detail view for the Approval Detail screen ────────────────────────────
+// Added on top of the friend's approve/reject/return logic above — read-only,
+// doesn't touch anything else in this file. Full step history + audit trail
+// for one quotation (listPendingApprovals only returns steps pending for the
+// CALLER's role, not the whole chain, so that alone can't render Screen 6).
+export async function getApprovalDetail(companyId, quotationId) {
+  const quotation = await prisma.quotation.findFirst({
+    where: { id: quotationId, companyId },
+    include: {
+      customer: true,
+      lines: { include: { product: true } },
+      approvalSteps: { include: { approver: { select: { name: true } } }, orderBy: { stepOrder: "asc" } },
+    },
+  });
+  if (!quotation) throw httpError(404, "Quotation not found");
+
+  const auditTrail = await prisma.auditLog.findMany({
+    where: { companyId, entityId: quotationId },
+    include: { user: { select: { name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  // ApprovalStep audit rows are logged with entityId = the step id, not the
+  // quotation id (see actOnApproval above) — pull those in too via metadata.
+  const stepAudit = await prisma.auditLog.findMany({
+    where: { companyId, entityType: "ApprovalStep", metadata: { path: ["quotationId"], equals: quotationId } },
+    include: { user: { select: { name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  const combinedAudit = [...auditTrail, ...stepAudit].sort((a, b) => a.createdAt - b.createdAt);
+
+  return {
+    id: quotation.id,
+    status: quotation.status,
+    blendedRiskScore: quotation.blendedRiskScore,
+    customer: { id: quotation.customer.id, name: quotation.customer.name, tier: quotation.customer.tier },
+    lines: quotation.lines.map((line) => ({
+      id: line.id,
+      productName: line.product.name,
+      category: line.product.category,
+      discountPercent: Number(line.discountPercent),
+      limit: Math.min(Number(line.categoryLimitAtTime), Number(line.tierLimitAtTime)),
+      overagePoints: Math.max(
+        0,
+        Number(line.discountPercent) - Math.min(Number(line.categoryLimitAtTime), Number(line.tierLimitAtTime))
+      ),
+    })),
+    approvalSteps: quotation.approvalSteps.map((s) => ({
+      id: s.id,
+      approverRole: s.approverRole,
+      status: s.status,
+      approver: s.approver?.name ?? null,
+      actedAt: s.actedAt,
+      reason: s.reason,
+      stepOrder: s.stepOrder,
+    })),
+    auditTrail: combinedAudit.map((a) => ({
+      user: a.user?.name ?? "System",
+      action: a.action,
+      date: a.createdAt,
+      note: a.metadata?.reason ?? null,
+    })),
+  };
+}
