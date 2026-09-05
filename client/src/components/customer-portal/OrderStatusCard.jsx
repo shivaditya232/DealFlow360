@@ -47,7 +47,7 @@ export default function OrderStatusCard({ order }) {
 
   const { quotationId, status, items, fulfilledAt, isBackorder } = order;
 
-  const statusColor = isBackorder ? '#f59e0b' : fulfilledAt ? '#10b981' : '#3b82f6';
+  const statusColor = isBackorder ? 'var(--color-warning-500)' : fulfilledAt ? 'var(--color-success-500)' : 'var(--color-primary-500)';
   const statusLabel = isBackorder ? 'Backordered' : fulfilledAt ? 'Delivered' : 'Processing';
 
   return (

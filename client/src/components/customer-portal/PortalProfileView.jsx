@@ -71,13 +71,13 @@ export default function PortalProfile() {
             width: '54px',
             height: '54px',
             borderRadius: '14px',
-            background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
+            background: 'linear-gradient(135deg, var(--color-primary-700), var(--color-primary-600))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '1.125rem',
             fontWeight: '700',
-            color: '#fff',
+            color: 'var(--text-inverse)',
             flexShrink: 0,
             letterSpacing: '0.03em',
           }}>
@@ -129,8 +129,8 @@ export default function PortalProfile() {
           borderRadius: '10px',
         }}>
           {profile.lastScoreChange.delta >= 0
-            ? <TrendingUp size={16} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
-            : <TrendingDown size={16} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />}
+            ? <TrendingUp size={16} color="var(--color-success-500)" style={{ flexShrink: 0, marginTop: '2px' }} />
+            : <TrendingDown size={16} color="var(--color-danger-500)" style={{ flexShrink: 0, marginTop: '2px' }} />}
           <div>
             <p style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--portal-text-1b)' }}>
               {profile.lastScoreChange.delta >= 0 ? '+' : ''}{profile.lastScoreChange.delta} points — {profile.lastScoreChange.reason}
@@ -152,7 +152,7 @@ export default function PortalProfile() {
           border: '1px solid rgba(239,68,68,0.22)',
           borderRadius: '9px',
         }}>
-          <p style={{ fontSize: '0.8rem', color: '#ef4444', lineHeight: '1.5' }}>{error}</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--color-danger-500)', lineHeight: '1.5' }}>{error}</p>
         </div>
       )}
     </div>

@@ -66,7 +66,7 @@ export default function PortalBilling() {
           backgroundColor: 'rgba(239,68,68,0.08)',
           border: '1px solid rgba(239,68,68,0.22)',
           borderRadius: '9px',
-          color: '#ef4444',
+          color: 'var(--color-danger-500)',
           fontSize: '0.8125rem',
         }}>
           {error}

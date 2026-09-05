@@ -111,7 +111,7 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
           {expiresAt && (
             <div style={{
               fontSize: '0.7375rem',
-              color: '#f59e0b',
+              color: 'var(--color-warning-500)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.3rem',
@@ -135,7 +135,7 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
           {confirmationDeadline && (
             <div style={{
               fontSize: '0.7375rem',
-              color: '#ef4444',
+              color: 'var(--color-danger-500)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.3rem',

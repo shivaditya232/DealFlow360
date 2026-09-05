@@ -1,10 +1,22 @@
 import prisma from "../config/prisma.js";
 import { httpError } from "../utils/httpError.js";
 
-export async function listCustomers(companyId) {
+// Bug fix: this used to filter `where: { companyId }`, so a rep could only
+// see/sell to customers that had originally been created under their own
+// company. Per user's explicit instruction, that's now inverted — reps sell
+// across the whole platform's customer base, not just their own company's.
+// `company` is included so the UI can show which company originally created
+// each customer (useful context now that the list spans companies).
+export async function listCustomers() {
   return prisma.customer.findMany({
-    where: { companyId },
-    select: { id: true, name: true, email: true, tier: true, reliabilityScore: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      tier: true,
+      reliabilityScore: true,
+      company: { select: { name: true } },
+    },
     orderBy: { name: "asc" },
   });
 }

@@ -116,7 +116,7 @@ export default function CustomerSidebar({ activeView, onNavigate, collapsed = fa
             width: '28px',
             height: '28px',
             borderRadius: '7px',
-            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+            background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

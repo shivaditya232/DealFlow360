@@ -96,6 +96,7 @@ export default function ProductsList() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={() => { setModalOpen(false); load(); }}
+        existingProducts={products || []}
       />
     </>
   );

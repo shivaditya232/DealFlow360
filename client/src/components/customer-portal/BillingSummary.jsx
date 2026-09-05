@@ -33,9 +33,9 @@ export default function BillingSummary({ data }) {
           border: '1px solid rgba(245,158,11,0.18)',
           borderRadius: '9px',
         }}>
-          <AlertCircle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: '1px' }} />
+          <AlertCircle size={16} color="var(--color-warning-500)" style={{ flexShrink: 0, marginTop: '1px' }} />
           <div>
-            <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#f59e0b', marginBottom: '0.2rem' }}>
+            <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: 'var(--color-warning-500)', marginBottom: '0.2rem' }}>
               Billing portal coming soon
             </p>
             <p style={{ fontSize: '0.75rem', color: 'var(--portal-text-2)' }}>
@@ -119,7 +119,7 @@ export default function BillingSummary({ data }) {
           <span style={{
             fontSize: '0.875rem',
             fontWeight: '700',
-            color: invoice.paidAt ? '#10b981' : '#f59e0b',
+            color: invoice.paidAt ? 'var(--color-success-500)' : 'var(--color-warning-500)',
           }}>
             ${Number(invoice.amount).toFixed(2)}
           </span>

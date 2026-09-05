@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
+import Checkbox from '../../components/ui/Checkbox';
 import Button from '../../components/ui/Button';
 import productService from '../../services/product.service';
 
@@ -12,6 +14,9 @@ const EMPTY = {
   taxRate: '',
   marginPercent: '',
   description: '',
+  baseProductId: '',
+  upsellMinMargin: '',
+  upsellPromoted: false,
 };
 
 // Screen 16/17 basics only (name, category, base price, unit, tax %, margin
@@ -19,7 +24,14 @@ const EMPTY = {
 // larger screen not built yet (a product can still be priced/discounted
 // without them; priceLine() in quotation.service.js already falls back to
 // basePrice when no PriceListEntry exists for a tier).
-export default function NewProductModal({ open, onClose, onCreated }) {
+//
+// `existingProducts` (from ProductsList) powers the optional "recommend for"
+// picker below: choosing a base product here creates an UpsellRule so reps
+// get this new product suggested (getUpsellSuggestions in
+// quotation.service.js) whenever a quotation already has the base product on
+// it — same mechanism the seed data already uses, just now reachable from
+// product creation instead of only from a seed script.
+export default function NewProductModal({ open, onClose, onCreated, existingProducts = [] }) {
   const [form, setForm] = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -30,7 +42,10 @@ export default function NewProductModal({ open, onClose, onCreated }) {
     setError(null);
   }, [open]);
 
-  const set = (field) => (e) => setForm((s) => ({ ...s, [field]: e.target.value }));
+  const set = (field) => (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm((s) => ({ ...s, [field]: value }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -49,6 +64,13 @@ export default function NewProductModal({ open, onClose, onCreated }) {
         taxRate: form.taxRate === '' ? 0 : Number(form.taxRate),
         marginPercent: form.marginPercent === '' ? 0 : Number(form.marginPercent),
         description: form.description.trim() || null,
+        upsell: form.baseProductId
+          ? {
+              baseProductId: form.baseProductId,
+              minMarginPercent: form.upsellMinMargin === '' ? 0 : Number(form.upsellMinMargin),
+              isPromoted: form.upsellPromoted,
+            }
+          : undefined,
       });
       onCreated(product);
     } catch (err) {
@@ -77,6 +99,39 @@ export default function NewProductModal({ open, onClose, onCreated }) {
         </div>
 
         <Input label="Description" value={form.description} onChange={set('description')} placeholder="Optional" />
+
+        <Select
+          label="Recommend for (base product)"
+          placeholder="Not an upsell for anything — skip"
+          value={form.baseProductId}
+          onChange={set('baseProductId')}
+          helperText="If reps are already quoting this product, they'll see the new one suggested as an add-on."
+        >
+          {existingProducts.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </Select>
+
+        {form.baseProductId && (
+          <>
+            <Input
+              label="Minimum margin to suggest (%)"
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value={form.upsellMinMargin}
+              onChange={set('upsellMinMargin')}
+              placeholder="0"
+              helperText="Only surface this suggestion to reps if the new product's own margin is at least this."
+            />
+            <Checkbox
+              label="Promote as a featured suggestion"
+              checked={form.upsellPromoted}
+              onChange={set('upsellPromoted')}
+            />
+          </>
+        )}
 
         <Button type="submit" variant="primary" fullWidth loading={submitting} className="df-mt-8">
           Create Product

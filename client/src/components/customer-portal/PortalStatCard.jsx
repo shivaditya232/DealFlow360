@@ -17,10 +17,10 @@ export default function PortalStatCard({
   loading = false,
 }) {
   const accentColor = {
-    default: '#3b82f6',
-    success: '#10b981',
-    warning: '#f59e0b',
-    danger: '#ef4444',
+    default: 'var(--color-primary-500)',
+    success: 'var(--color-success-500)',
+    warning: 'var(--color-warning-500)',
+    danger: 'var(--color-danger-500)',
   }[status];
 
   const bgColor = {
@@ -38,7 +38,7 @@ export default function PortalStatCard({
   }[status];
 
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-  const trendColor = trend === 'up' ? '#10b981' : trend === 'down' ? '#ef4444' : 'var(--portal-text-3)';
+  const trendColor = trend === 'up' ? 'var(--color-success-500)' : trend === 'down' ? 'var(--color-danger-500)' : 'var(--portal-text-3)';
 
   return (
     <div style={{

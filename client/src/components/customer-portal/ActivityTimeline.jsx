@@ -10,14 +10,14 @@ import { CheckCircle2, Clock, MessageSquare, RotateCcw } from 'lucide-react';
  * see the comment there for why there's no dedicated audit-log endpoint yet.)
  */
 const ACTIVITY_ICONS = {
-  CONFIRMED:  { icon: CheckCircle2, color: '#10b981' },
-  ACCEPTED:   { icon: CheckCircle2, color: '#3b82f6' },
-  APPROVED:   { icon: CheckCircle2, color: '#3b82f6' },
-  FULFILLED:  { icon: CheckCircle2, color: '#10b981' },
-  REJECTED:   { icon: CheckCircle2, color: '#ef4444' },
-  CANCELLED:  { icon: CheckCircle2, color: '#ef4444' },
-  NEGOTIATING:{ icon: RotateCcw,    color: '#8b5cf6' },
-  PENDING_APPROVAL: { icon: Clock,  color: '#f59e0b' },
+  CONFIRMED:  { icon: CheckCircle2, color: 'var(--color-success-500)' },
+  ACCEPTED:   { icon: CheckCircle2, color: 'var(--color-primary-500)' },
+  APPROVED:   { icon: CheckCircle2, color: 'var(--color-primary-500)' },
+  FULFILLED:  { icon: CheckCircle2, color: 'var(--color-success-500)' },
+  REJECTED:   { icon: CheckCircle2, color: 'var(--color-danger-500)' },
+  CANCELLED:  { icon: CheckCircle2, color: 'var(--color-danger-500)' },
+  NEGOTIATING:{ icon: RotateCcw,    color: 'var(--accent-violet-500)' },
+  PENDING_APPROVAL: { icon: Clock,  color: 'var(--color-warning-500)' },
   MESSAGE:    { icon: MessageSquare,color: 'var(--portal-text-3)' },
   default:    { icon: Clock,        color: 'var(--portal-text-4)'  },
 };
