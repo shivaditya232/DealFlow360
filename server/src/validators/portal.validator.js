@@ -36,6 +36,16 @@ export const proposalSchema = z
   });
 
 /**
+ * Customer rejecting the rep's current counter-offer outright (no counter
+ * discount attached — just a decline, optionally with a reason the rep can
+ * see in the negotiation thread). Use proposalSchema instead when the
+ * customer wants to send back a counter discount.
+ */
+export const customerRejectSchema = z.object({
+  message: z.string().max(2000).optional().nullable(),
+});
+
+/**
  * Rep responding to a pending proposal: ACCEPT, REJECT, or COUNTER.
  * COUNTER requires proposedChanges.
  */

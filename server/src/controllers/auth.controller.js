@@ -1,10 +1,29 @@
-import { signupSchema, loginSchema } from "../validators/auth.validator.js";
+import { signupSchema, loginSchema, createTeamMemberSchema } from "../validators/auth.validator.js";
 import * as authService from "../services/auth.service.js";
 
 export async function signup(req, res, next) {
   try {
     const data = signupSchema.parse(req.body);
     const result = await authService.signup(data);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listTeamMembers(req, res, next) {
+  try {
+    const result = await authService.listTeamMembers(req.auth.companyId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createTeamMember(req, res, next) {
+  try {
+    const data = createTeamMemberSchema.parse(req.body);
+    const result = await authService.createTeamMember(req.auth.companyId, data);
     res.status(201).json(result);
   } catch (err) {
     next(err);

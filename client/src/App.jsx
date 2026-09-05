@@ -14,6 +14,9 @@ import ApprovalDetail from './pages/approvals/ApprovalDetail';
 import DealHealth from './pages/dashboard/DealHealth';
 import ReportsPage from './pages/reports/ReportsPage';
 import AdminConfig from './pages/admin/AdminConfig';
+import ProductsList from './pages/products/ProductsList';
+import DiscountConfigPage from './pages/products/DiscountConfigPage';
+import TeamPage from './pages/team/TeamPage';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleGuard from './routes/RoleGuard';
@@ -23,6 +26,8 @@ import RoleGuard from './routes/RoleGuard';
 const INTERNAL_ROLES = ['SALES_REP', 'MANAGER', 'FINANCE', 'ADMIN'];
 const APPROVAL_ROLES = ['MANAGER', 'FINANCE', 'ADMIN'];
 const ADMIN_ROLES = ['ADMIN'];
+const PRODUCTS_ROLES = ['ADMIN'];
+const TEAM_ROLES = ['ADMIN'];
 
 /**
  * Root Index Dispatcher — sends an authenticated user to their landing
@@ -91,6 +96,30 @@ export default function App() {
                 element={
                   <RoleGuard allowedRoles={ADMIN_ROLES}>
                     <AdminConfig />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/products"
+                element={
+                  <RoleGuard allowedRoles={PRODUCTS_ROLES}>
+                    <ProductsList />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/products/config"
+                element={
+                  <RoleGuard allowedRoles={PRODUCTS_ROLES}>
+                    <DiscountConfigPage />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/team"
+                element={
+                  <RoleGuard allowedRoles={TEAM_ROLES}>
+                    <TeamPage />
                   </RoleGuard>
                 }
               />

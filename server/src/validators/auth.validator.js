@@ -28,3 +28,16 @@ export const loginSchema = z.object({
   password: z.string().min(1, "password is required"),
 });
 
+// Admin directly creating a MANAGER/FINANCE/SALES_REP/ADMIN teammate in
+// their OWN company (companyId comes from the Admin's auth token, never
+// the client — unlike signup there's no companySlug here, since this can
+// only ever target the caller's own company). Still requires the same
+// OTP-verified-email gate as signup (see authService.createTeamMember) —
+// this bypasses the self-registration FORM, not identity verification.
+export const createTeamMemberSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  role: z.enum(USER_ROLES),
+});
+

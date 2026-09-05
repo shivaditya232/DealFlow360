@@ -11,9 +11,20 @@ function lineTotal(line) {
   return gross * (1 - Number(line.discountPercent) / 100);
 }
 
-async function getScopedQuotation(companyId, quotationId, include = {}) {
+// Bug fix: this used to scope by companyId ALONE, so any authenticated
+// internal user — including a plain SALES_REP — could view, edit lines on,
+// delete lines from, or submit-for-approval ANY OTHER rep's quotation in the
+// same company, just by knowing/guessing its id (requireInternal only checks
+// accountType, not role). A Sales Rep is now scoped to quotations where
+// repId === their own userId; Manager/Finance/Admin keep company-wide
+// visibility, since they need it for approvals, deal health, and reporting.
+async function getScopedQuotation(companyId, quotationId, include = {}, { userId, role } = {}) {
   const quotation = await prisma.quotation.findFirst({
-    where: { id: quotationId, companyId },
+    where: {
+      id: quotationId,
+      companyId,
+      ...(role === "SALES_REP" ? { repId: userId } : {}),
+    },
     include,
   });
   if (!quotation) throw httpError(404, "Quotation not found");
@@ -31,9 +42,16 @@ export async function createQuotation({ companyId, repId, customerId }) {
   return quotation;
 }
 
-export async function listQuotations({ companyId, status }) {
+export async function listQuotations({ companyId, status, userId, role }) {
   const quotations = await prisma.quotation.findMany({
-    where: { companyId, ...(status ? { status } : {}) },
+    // See the ownership-scoping comment on getScopedQuotation above — same
+    // fix applies here: a Sales Rep must only see their own quotations in
+    // this list, not the whole company's.
+    where: {
+      companyId,
+      ...(status ? { status } : {}),
+      ...(role === "SALES_REP" ? { repId: userId } : {}),
+    },
     include: { customer: { select: { id: true, name: true } }, lines: true },
     orderBy: { updatedAt: "desc" },
   });
@@ -47,7 +65,7 @@ export async function listQuotations({ companyId, status }) {
   }));
 }
 
-export async function getQuotationDetail({ companyId, quotationId }) {
+export async function getQuotationDetail({ companyId, quotationId, userId, role }) {
   const quotation = await getScopedQuotation(companyId, quotationId, {
     customer: true,
     rep: { select: { id: true, name: true } },
@@ -63,7 +81,7 @@ export async function getQuotationDetail({ companyId, quotationId }) {
       },
       orderBy: { createdAt: "asc" },
     },
-  });
+  }, { userId, role });
 
   const lineBreakdown = buildLineBreakdown(quotation.lines);
   const breakdownByLineId = Object.fromEntries(lineBreakdown.map((b) => [b.lineId, b]));
@@ -130,8 +148,8 @@ async function priceLine({ companyId, customerTier, productId, variantId, quanti
   };
 }
 
-export async function addLine({ companyId, quotationId, productId, variantId, quantity, discountPercent, lineType }) {
-  const quotation = await getScopedQuotation(companyId, quotationId, { customer: true });
+export async function addLine({ companyId, quotationId, productId, variantId, quantity, discountPercent, lineType, userId, role }) {
+  const quotation = await getScopedQuotation(companyId, quotationId, { customer: true }, { userId, role });
   if (quotation.status !== "DRAFT") throw httpError(409, "Only draft quotations can be edited");
 
   const { unitPrice, categoryLimitAtTime, tierLimitAtTime } = await priceLine({
@@ -160,8 +178,8 @@ export async function addLine({ companyId, quotationId, productId, variantId, qu
   return { ...line, ...buildLineBreakdown([line])[0] };
 }
 
-export async function updateLine({ companyId, quotationId, lineId, quantity, discountPercent }) {
-  const quotation = await getScopedQuotation(companyId, quotationId);
+export async function updateLine({ companyId, quotationId, lineId, quantity, discountPercent, userId, role }) {
+  const quotation = await getScopedQuotation(companyId, quotationId, {}, { userId, role });
   if (quotation.status !== "DRAFT") throw httpError(409, "Only draft quotations can be edited");
 
   const existing = await prisma.quotationLine.findFirst({ where: { id: lineId, quotationId } });
@@ -181,8 +199,8 @@ export async function updateLine({ companyId, quotationId, lineId, quantity, dis
   return { ...line, ...buildLineBreakdown([line])[0] };
 }
 
-export async function deleteLine({ companyId, quotationId, lineId }) {
-  const quotation = await getScopedQuotation(companyId, quotationId);
+export async function deleteLine({ companyId, quotationId, lineId, userId, role }) {
+  const quotation = await getScopedQuotation(companyId, quotationId, {}, { userId, role });
   if (quotation.status !== "DRAFT") throw httpError(409, "Only draft quotations can be edited");
 
   const existing = await prisma.quotationLine.findFirst({ where: { id: lineId, quotationId } });
@@ -192,8 +210,8 @@ export async function deleteLine({ companyId, quotationId, lineId }) {
   await prisma.quotation.update({ where: { id: quotationId }, data: { lastActivityAt: new Date() } });
 }
 
-export async function getUpsellSuggestions({ companyId, quotationId }) {
-  const quotation = await getScopedQuotation(companyId, quotationId, { lines: true });
+export async function getUpsellSuggestions({ companyId, quotationId, userId, role }) {
+  const quotation = await getScopedQuotation(companyId, quotationId, { lines: true }, { userId, role });
   const productIds = [...new Set(quotation.lines.map((l) => l.productId))];
   if (productIds.length === 0) return [];
 
@@ -264,8 +282,8 @@ export async function runApprovalRouting({ companyId, quotationId, customerTier,
   return { status: "PENDING_APPROVAL", blendedRiskScore };
 }
 
-export async function submitQuotation({ companyId, quotationId, actingUserId }) {
-  const quotation = await getScopedQuotation(companyId, quotationId, { customer: true });
+export async function submitQuotation({ companyId, quotationId, actingUserId, role }) {
+  const quotation = await getScopedQuotation(companyId, quotationId, { customer: true }, { userId: actingUserId, role });
   if (!["DRAFT", "NEGOTIATING"].includes(quotation.status)) {
     throw httpError(409, "Only draft or negotiating quotations can be submitted");
   }

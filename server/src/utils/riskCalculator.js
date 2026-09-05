@@ -13,18 +13,28 @@ import prisma from "../config/prisma.js";
  * @param {string} companyId
  * @param {string} quotationId
  * @param {string} customerTier  - CustomerTier enum value ("BRONZE" | "SILVER" | "GOLD")
+ * @param {object} [db=prisma]  - Prisma client to query with. Bug fix: when this
+ *   is called from inside a prisma.$transaction(async (tx) => ...) callback
+ *   RIGHT AFTER updating a QuotationLine's discountPercent within that same
+ *   transaction, querying with the module-level `prisma` singleton (a
+ *   different connection under READ COMMITTED isolation) reads the PRE-update
+ *   row — the transaction hasn't committed yet. That let a negotiated
+ *   discount blow past its approval threshold (e.g. accepting a 49% discount
+ *   proposal) get silently auto-confirmed, because the score was computed
+ *   from the OLD discount, not the one just being applied. Callers inside a
+ *   transaction must pass their `tx` client here so the read sees the write.
  * @returns {Promise<number>} blendedRiskScore (2 decimal places)
  */
-export async function computeBlendedRiskScore(companyId, quotationId, customerTier) {
+export async function computeBlendedRiskScore(companyId, quotationId, customerTier, db = prisma) {
   const [lines, discountTier, categoryLimits] = await Promise.all([
-    prisma.quotationLine.findMany({
+    db.quotationLine.findMany({
       where: { quotationId },
       include: { product: { select: { category: true } } },
     }),
-    prisma.discountTier.findUnique({
+    db.discountTier.findUnique({
       where: { companyId_tier: { companyId, tier: customerTier } },
     }),
-    prisma.categoryDiscountLimit.findMany({ where: { companyId } }),
+    db.categoryDiscountLimit.findMany({ where: { companyId } }),
   ]);
 
   const tierLimitPct = discountTier ? Number(discountTier.maxDiscountPercent) : 0;

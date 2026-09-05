@@ -116,6 +116,44 @@ export async function signup({ companySlug, accountType, email, password, name }
   };
 }
 
+// Admin-only (gated at the route level, authorize("ADMIN")) — creates a
+// MANAGER/FINANCE/SALES_REP/ADMIN teammate directly in the CALLER's own
+// company. This is the invite-flow follow-up flagged in signup() above:
+// there was previously no way at all to grant MANAGER/FINANCE, since
+// self-signup forces every joiner to SALES_REP. Still requires the same
+// OTP-verified-email gate signup() uses (isEmailVerified/
+// consumeEmailVerification) — this replaces the self-registration FORM
+// with an admin-driven one, not identity verification.
+// List of existing internal users in the caller's company — lets the Admin
+// see who's already on the team (avoid duplicate invites, confirm a role
+// stuck) alongside the create form above.
+export async function listTeamMembers(companyId) {
+  return prisma.user.findMany({
+    where: { companyId },
+    select: { id: true, name: true, email: true, role: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function createTeamMember(companyId, { name, email, password, role }) {
+  if (!(await isEmailVerified(email))) {
+    throw httpError(400, "Please verify this email with the OTP before creating the account.");
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { companyId_email: { companyId, email } },
+  });
+  if (existing) throw httpError(409, "An account with this email already exists in this company");
+
+  const passwordHash = await hashPassword(password);
+  const user = await prisma.user.create({
+    data: { companyId, email, passwordHash, name, role },
+  });
+  await consumeEmailVerification(email);
+
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role } };
+}
+
 export async function login({ companySlug, email, password }) {
   const company = await resolveCompany(companySlug);
 

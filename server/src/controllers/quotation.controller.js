@@ -23,7 +23,12 @@ export async function create(req, res, next) {
 export async function list(req, res, next) {
   try {
     const { status } = listQuotationsQuerySchema.parse(req.query);
-    const quotations = await quotationService.listQuotations({ companyId: req.auth.companyId, status });
+    const quotations = await quotationService.listQuotations({
+      companyId: req.auth.companyId,
+      status,
+      userId: req.auth.sub,
+      role: req.auth.role,
+    });
     res.json(quotations);
   } catch (err) {
     next(err);
@@ -35,6 +40,8 @@ export async function detail(req, res, next) {
     const quotation = await quotationService.getQuotationDetail({
       companyId: req.auth.companyId,
       quotationId: req.params.id,
+      userId: req.auth.sub,
+      role: req.auth.role,
     });
     res.json(quotation);
   } catch (err) {
@@ -49,6 +56,8 @@ export async function addLine(req, res, next) {
       companyId: req.auth.companyId,
       quotationId: req.params.id,
       ...data,
+      userId: req.auth.sub,
+      role: req.auth.role,
     });
     res.status(201).json(line);
   } catch (err) {
@@ -64,6 +73,8 @@ export async function updateLine(req, res, next) {
       quotationId: req.params.id,
       lineId: req.params.lineId,
       ...data,
+      userId: req.auth.sub,
+      role: req.auth.role,
     });
     res.json(line);
   } catch (err) {
@@ -77,6 +88,8 @@ export async function deleteLine(req, res, next) {
       companyId: req.auth.companyId,
       quotationId: req.params.id,
       lineId: req.params.lineId,
+      userId: req.auth.sub,
+      role: req.auth.role,
     });
     res.status(204).send();
   } catch (err) {
@@ -89,6 +102,8 @@ export async function upsellSuggestions(req, res, next) {
     const suggestions = await quotationService.getUpsellSuggestions({
       companyId: req.auth.companyId,
       quotationId: req.params.id,
+      userId: req.auth.sub,
+      role: req.auth.role,
     });
     res.json(suggestions);
   } catch (err) {
@@ -102,6 +117,7 @@ export async function submit(req, res, next) {
       companyId: req.auth.companyId,
       quotationId: req.params.id,
       actingUserId: req.auth.sub,
+      role: req.auth.role,
     });
     res.json(result);
   } catch (err) {

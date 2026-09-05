@@ -1,4 +1,4 @@
-import { proposalSchema, repResponseSchema } from "../validators/portal.validator.js";
+import { proposalSchema, repResponseSchema, customerRejectSchema } from "../validators/portal.validator.js";
 import * as portalService from "../services/portal.service.js";
 
 export async function listQuotations(req, res, next) {
@@ -80,6 +80,22 @@ export async function customerAcceptProposal(req, res, next) {
       customerId,
       companyId,
       req.params.proposalId
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function rejectProposal(req, res, next) {
+  try {
+    const { sub: customerId, companyId } = req.auth;
+    const data = customerRejectSchema.parse(req.body);
+    const result = await portalService.customerRejectProposal(
+      customerId,
+      companyId,
+      req.params.proposalId,
+      data
     );
     res.json(result);
   } catch (err) {

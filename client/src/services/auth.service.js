@@ -72,6 +72,26 @@ export const authService = {
   },
 
   /**
+   * Admin-only: list this company's internal users (Team page).
+   * @returns {Promise<Array<{ id, name, email, role }>>}
+   */
+  listTeamMembers: async () => {
+    const response = await api.get('/auth/team-members');
+    return response.data;
+  },
+
+  /**
+   * Admin-only: directly create a MANAGER/FINANCE/SALES_REP/ADMIN teammate
+   * in the Admin's own company. `email` must already be OTP-verified via
+   * otpService (same request/verify flow as signup) before this is called.
+   * @param {{ name: string, email: string, password: string, role: string }} payload
+   */
+  createTeamMember: async (payload) => {
+    const response = await api.post('/auth/team-members', payload);
+    return response.data;
+  },
+
+  /**
    * Centralized client logout
    */
   logout: () => {
