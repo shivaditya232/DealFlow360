@@ -1,14 +1,21 @@
-import axios from 'axios';
+import api from './api';
+import { clearAuth } from '../utils/authStorage';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-
+/**
+ * Authentication Service
+ * 
+ * Directly maps to backend endpoints:
+ * - POST /api/auth/login
+ * - POST /api/auth/signup
+ */
 export const authService = {
   /**
-   * Authenticate with companySlug, email, password
+   * Authenticate user or customer
    * @param {{ companySlug: string, email: string, password: string }} credentials
+   * @returns {Promise<{ token: string, landing: string, user?: object, customer?: object }>}
    */
   login: async ({ companySlug, email, password }) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+    const response = await api.post('/auth/login', {
       companySlug,
       email,
       password,
@@ -17,12 +24,30 @@ export const authService = {
   },
 
   /**
-   * Register a new user/customer account
-   * @param {{ companySlug: string, email: string, password: string, name: string, accountType: string, role?: string }} data
+   * Register a new internal user or customer account
+   * @param {{
+   *   companySlug: string,
+   *   accountType: 'INTERNAL' | 'CUSTOMER',
+   *   email: string,
+   *   password: string,
+   *   name: string,
+   *   role?: 'SALES_REP' | 'MANAGER' | 'FINANCE' | 'ADMIN'
+   * }} payload
+   * @returns {Promise<{ token: string, landing: string, user?: object, customer?: object }>}
    */
-  signup: async (data) => {
-    const response = await axios.post(`${API_BASE_URL}/auth/signup`, data);
+  signup: async (payload) => {
+    const response = await api.post('/auth/signup', payload);
     return response.data;
+  },
+
+  /**
+   * Centralized client logout
+   */
+  logout: () => {
+    clearAuth();
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
   },
 };
 

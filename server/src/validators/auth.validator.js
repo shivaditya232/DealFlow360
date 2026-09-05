@@ -9,7 +9,6 @@ export const signupSchema = z
     email: z.string().email(),
     password: z.string().min(8, "Password must be at least 8 characters"),
     name: z.string().min(1),
-    // required only for INTERNAL accounts — which internal role this user is
     role: z.enum(USER_ROLES).optional(),
   })
   .superRefine((data, ctx) => {

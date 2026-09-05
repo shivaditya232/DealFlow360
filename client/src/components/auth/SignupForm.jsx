@@ -13,11 +13,12 @@ import Input from '../ui/Input';
 import PasswordInput from '../ui/PasswordInput';
 import AccountTypeSelector from './AccountTypeSelector';
 import PasswordStrength from './PasswordStrength';
-import authService from '../../services/auth.service';
+import { useAuth } from '../../context/AuthContext';
 import { validateSignupForm, validateSignupField } from '../../validators/auth.validator';
 
 export default function SignupForm({ onSubmitSuccess }) {
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -107,7 +108,6 @@ export default function SignupForm({ onSubmitSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prevent duplicate submissions
     if (isSubmitting) return;
 
     // Validate entire form with Zod schema
@@ -137,41 +137,67 @@ export default function SignupForm({ onSubmitSuccess }) {
     setSubmitFeedback(null);
 
     // Prepare payload aligned with backend Prisma / Zod contract
+    // IMPORTANT: Never trim or mutate the user's password!
     const payload = {
       name: formData.fullName.trim(),
-      companySlug: formData.companySlug.trim(),
+      companySlug: formData.companySlug.trim().toLowerCase(),
       email: formData.email.trim(),
       password: formData.password,
       accountType: formData.accountType,
       role: formData.role || undefined,
     };
 
-    console.log('[DealFlow360 Signup] Valid form submission prepared with Zod:', payload);
-
     try {
-      // Previously a network error here (no err.response — offline, dropped
-      // connection) fell through silently and this still reported "Account
-      // created successfully" + redirected to /login, even though the
-      // signup never reached the server. Any failure — network or server —
-      // now goes to the catch block below and is reported honestly.
-      const response = await authService.signup(payload);
+      const response = await signup(payload);
+
+      const destination = response.landing === 'PORTAL' ? '/portal' : '/dashboard';
+      const destinationName = response.landing === 'PORTAL' ? 'Customer Portal' : 'Dashboard';
 
       setSubmitFeedback({
         type: 'success',
-        message: `Account created successfully for ${payload.name}. Redirecting to sign in...`,
+        message: `Account created successfully. Redirecting to ${destinationName}...`,
       });
 
       if (onSubmitSuccess) {
-        onSubmitSuccess(response || payload);
+        onSubmitSuccess(response);
       }
 
       setTimeout(() => {
-        navigate('/login');
-      }, 1500);
+        navigate(destination, { replace: true });
+      }, 500);
     } catch (err) {
-      const message = err.isOffline
-        ? "You're offline — check your connection and try again."
-        : err.response?.data?.message || err.response?.data?.error || 'Registration request could not be completed. Please try again.';
+      const status = err.response ? err.response.status : null;
+      const backendError = err.response?.data?.error;
+      const validationDetails = err.response?.data?.details;
+
+      let message = 'Registration request could not be completed. Please try again.';
+
+      if (status === 409) {
+        message = backendError || 'A company with this identifier already exists. Please choose a different company identifier.';
+        if (backendError && (backendError.toLowerCase().includes('company') || backendError.toLowerCase().includes('workspace') || backendError.toLowerCase().includes('slug'))) {
+          setErrors((prev) => ({ ...prev, companySlug: backendError }));
+        } else if (backendError && backendError.toLowerCase().includes('email')) {
+          setErrors((prev) => ({ ...prev, email: backendError }));
+        }
+      } else if (status === 404) {
+        message = backendError || 'Company not found';
+        setErrors((prev) => ({ ...prev, companySlug: message }));
+      } else if (status === 400) {
+        message = backendError || 'Validation failed';
+        if (validationDetails?.fieldErrors) {
+          const fieldIssues = Object.entries(validationDetails.fieldErrors)
+            .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+            .join('; ');
+          if (fieldIssues) message += ` (${fieldIssues})`;
+        }
+      } else if (status === 429) {
+        message = backendError || 'Too many attempts. Please try again later.';
+      } else if (status === 500) {
+        message = backendError || 'Internal server error';
+      } else if (backendError) {
+        message = backendError;
+      }
+
       setSubmitFeedback({
         type: 'error',
         message,
@@ -208,7 +234,7 @@ export default function SignupForm({ onSubmitSuccess }) {
           id="df-input-fullName"
           name="fullName"
           label="Full name"
-          placeholder="e.g. Alex Morgan"
+          placeholder="e.g. Navikesh"
           value={formData.fullName}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -219,13 +245,13 @@ export default function SignupForm({ onSubmitSuccess }) {
           startIcon={<User size={18} />}
         />
 
-        {/* Company Slug */}
+        {/* Company */}
         <Input
           id="df-input-companySlug"
           name="companySlug"
           label="Company"
-          placeholder="e.g. acme-corp"
-          helperText="Your organization's workspace identifier"
+          placeholder="e.g. my-new-company"
+          helperText="Unique identifier for your company"
           value={formData.companySlug}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -253,7 +279,7 @@ export default function SignupForm({ onSubmitSuccess }) {
           startIcon={<Mail size={18} />}
         />
 
-        {/* Password with fixed eye toggle & Strength Indicator */}
+        {/* Password with eye toggle & Strength Indicator */}
         <div className="df-password-field-group">
           <PasswordInput
             id="password"
@@ -273,7 +299,7 @@ export default function SignupForm({ onSubmitSuccess }) {
           <PasswordStrength password={formData.password} />
         </div>
 
-        {/* Confirm Password with fixed eye toggle */}
+        {/* Confirm Password with eye toggle */}
         <PasswordInput
           id="confirmPassword"
           name="confirmPassword"
