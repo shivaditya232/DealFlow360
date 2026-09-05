@@ -2,12 +2,7 @@ import prisma from "../config/prisma.js";
 import { hashPassword, comparePassword } from "../utils/password.util.js";
 import { signAccessToken } from "../utils/jwt.util.js";
 import { assertNotRateLimited, recordFailedAttempt, clearFailedAttempts } from "../utils/rateLimit.util.js";
-
-function httpError(status, message) {
-  const err = new Error(message);
-  err.status = status;
-  return err;
-}
+import { httpError } from "../utils/httpError.js";
 
 async function resolveCompany(companySlug) {
   const company = await prisma.company.findUnique({ where: { slug: companySlug } });

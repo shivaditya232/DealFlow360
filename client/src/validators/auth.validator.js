@@ -8,6 +8,8 @@ import { z } from 'zod';
 export const USER_ROLES = ['SALES_REP', 'MANAGER', 'FINANCE', 'ADMIN'];
 export const ACCOUNT_TYPES = ['INTERNAL', 'CUSTOMER'];
 
+const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 // ============================================================================
 // LOGIN SCHEMA
 // ============================================================================
@@ -30,8 +32,7 @@ export const loginSchema = z.object({
 
   password: z
     .string({ required_error: 'Password is required' })
-    .transform((val) => val.trim())
-    .pipe(z.string().min(1, 'Password is required')),
+    .min(1, 'Password is required'),
 });
 
 /**
@@ -80,17 +81,23 @@ export const signupSchema = z
   .object({
     fullName: z
       .string({ required_error: 'Full name is required' })
-      .transform((val) => val.trim())
+      .transform((val) => (val ? val.trim() : ''))
       .pipe(z.string().min(1, 'Full name is required')),
 
     companySlug: z
-      .string({ required_error: 'Company is required' })
-      .transform((val) => val.trim())
-      .pipe(z.string().min(1, 'Company is required')),
+      .string({ required_error: 'Company identifier is required' })
+      .transform((val) => (val ? val.trim().toLowerCase() : ''))
+      .pipe(
+        z
+          .string()
+          .min(2, 'Company identifier must be at least 2 characters')
+          .max(60, 'Company identifier must be at most 60 characters')
+          .regex(slugRegex, 'Only lowercase letters, numbers and hyphens allowed (e.g. acme-corp)')
+      ),
 
     email: z
       .string({ required_error: 'Enter a valid email address' })
-      .transform((val) => val.trim())
+      .transform((val) => (val ? val.trim() : ''))
       .pipe(
         z
           .string()
@@ -100,13 +107,7 @@ export const signupSchema = z
 
     password: z
       .string({ required_error: 'Password is required' })
-      .transform((val) => val.trim())
-      .pipe(
-        z
-          .string()
-          .min(1, 'Password is required')
-          .min(8, 'Password must be at least 8 characters')
-      ),
+      .min(8, 'Password must be at least 8 characters'),
 
     confirmPassword: z
       .string({ required_error: 'Confirm password is required' })

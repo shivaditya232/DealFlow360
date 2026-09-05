@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Mail, 
@@ -12,10 +12,13 @@ import Input from '../../components/ui/Input';
 import PasswordInput from '../../components/ui/PasswordInput';
 import Checkbox from '../../components/ui/Checkbox';
 import LoginBrandPanel from '../../components/layout/LoginBrandPanel';
-import authService from '../../services/auth.service';
+import { useAuth } from '../../context/AuthContext';
 import { validateLoginForm, validateLoginField } from '../../validators/auth.validator';
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login, isAuthenticated, landing } = useAuth();
+
   const [formData, setFormData] = useState({
     companySlug: '',
     email: '',
@@ -26,6 +29,14 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitFeedback, setSubmitFeedback] = useState(null);
+
+  // If already authenticated, redirect to destination
+  useEffect(() => {
+    if (isAuthenticated) {
+      const destination = landing === 'PORTAL' ? '/portal' : '/dashboard';
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, landing, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -93,44 +104,49 @@ export default function Login() {
     setSubmitFeedback(null);
 
     try {
-      const response = await authService.login({
+      const response = await login({
         companySlug: formData.companySlug.trim(),
         email: formData.email.trim(),
         password: formData.password,
+        rememberMe: formData.rememberMe,
       });
-
-      if (response && response.token) {
-        if (formData.rememberMe) {
-          localStorage.setItem('df_token', response.token);
-          localStorage.setItem('df_user', JSON.stringify(response.user || response.customer));
-        } else {
-          sessionStorage.setItem('df_token', response.token);
-          sessionStorage.setItem('df_user', JSON.stringify(response.user || response.customer));
-        }
-      }
 
       setSubmitFeedback({
         type: 'success',
         message: 'Sign in successful. Redirecting...',
       });
+
+      // Dispatch to backend-dictated landing
+      const destination = response.landing === 'PORTAL' ? '/portal' : '/dashboard';
+      setTimeout(() => {
+        navigate(destination, { replace: true });
+      }, 400);
     } catch (error) {
       const status = error.response ? error.response.status : null;
+      const backendError = error.response?.data?.error;
+
+      let message = 'Unable to sign in. Please try again.';
+
       if (status === 401) {
-        setSubmitFeedback({
-          type: 'error',
-          message: 'Invalid company, email, or password.',
-        });
+        message = backendError || 'Invalid credentials';
+      } else if (status === 404) {
+        message = backendError || 'Company not found';
       } else if (status === 429) {
-        setSubmitFeedback({
-          type: 'error',
-          message: 'Too many failed login attempts. Please try again later.',
-        });
-      } else {
-        setSubmitFeedback({
-          type: 'error',
-          message: 'Invalid company, email, or password.',
-        });
+        message = backendError || 'Too many failed login attempts. Try again in a few minutes.';
+      } else if (status === 400) {
+        message = backendError || 'Validation failed';
+      } else if (status === 409) {
+        message = backendError || 'Conflict occurred. Please check your credentials.';
+      } else if (status === 500) {
+        message = backendError || 'Internal server error';
+      } else if (backendError) {
+        message = backendError;
       }
+
+      setSubmitFeedback({
+        type: 'error',
+        message,
+      });
     } finally {
       setIsSubmitting(false);
     }
