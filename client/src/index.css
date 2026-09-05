@@ -1982,6 +1982,7 @@ html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render th
 }
 
 /* Input Height: 54px substantial enterprise height (within 52-58px) */
+.df-login-form .df-input,
 .df-signup-form .df-input {
   height: 3.375rem; /* 54px */
   min-height: 3.375rem;
@@ -1990,19 +1991,36 @@ html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render th
   border-radius: 8px;
   border: 1px solid #D8DEE8;
   color: #0f172a;
-  background-color: #ffffff;
+  background-color: #ffffff !important;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+/* Prevent browser autofill from turning inputs blue */
+.df-login-form .df-input:-webkit-autofill,
+.df-login-form .df-input:-webkit-autofill:hover,
+.df-login-form .df-input:-webkit-autofill:focus,
+.df-login-form .df-input:-webkit-autofill:active,
+.df-signup-form .df-input:-webkit-autofill,
+.df-signup-form .df-input:-webkit-autofill:hover,
+.df-signup-form .df-input:-webkit-autofill:focus,
+.df-signup-form .df-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.df-login-form .df-input-has-start-icon,
 .df-signup-form .df-input-has-start-icon {
   padding-left: 3rem; /* 48px */
 }
 
+.df-login-form .df-input-has-end-action,
 .df-signup-form .df-input-has-end-action {
   padding-right: 3.25rem; /* 52px */
 }
 
+.df-login-form .df-input-start-icon,
 .df-signup-form .df-input-start-icon {
   left: 1rem;
   width: 1.125rem;
@@ -2011,6 +2029,7 @@ html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render th
   transform: translateY(-50%);
 }
 
+.df-login-form .df-input-end-action,
 .df-signup-form .df-input-end-action {
   right: 1rem;
   width: 2.25rem;
@@ -2019,11 +2038,13 @@ html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render th
   transform: translateY(-50%);
 }
 
+.df-login-form .df-input-action-btn,
 .df-signup-form .df-input-action-btn {
   border-radius: 6px;
 }
 
 /* Feedback Slot: 7px below input (within 6-8px) */
+.df-login-form .df-input-feedback-slot,
 .df-signup-form .df-input-feedback-slot {
   min-height: 1.125rem; /* 18px reserved slot */
   margin-top: 0.4375rem; /* 7px */
@@ -2031,6 +2052,7 @@ html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render th
   align-items: center;
 }
 
+.df-login-form .df-helper-text,
 .df-signup-form .df-helper-text {
   font-size: 0.75rem;
   color: #64748b;

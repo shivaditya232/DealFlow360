@@ -9,10 +9,10 @@ import { useAuth } from '../context/AuthContext';
  * - Internal roles: 'SALES_REP' | 'MANAGER' | 'FINANCE' | 'ADMIN'
  * - Customer: accountType === 'CUSTOMER' (role is null)
  */
-export default function RoleGuard({ 
-  allowedRoles = [], 
-  allowCustomer = false, 
-  children 
+export default function RoleGuard({
+  allowedRoles = [],
+  allowCustomer = false,
+  children
 }) {
   const { accountType, role, landing } = useAuth();
 
