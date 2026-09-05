@@ -5,6 +5,7 @@ import config from "./config/index.js";
 import prisma from "./config/prisma.js";
 import redis from "./config/redis.js";
 import authRoutes from "./routes/auth.routes.js";
+import otpRoutes from "./routes/otp.routes.js";
 import configRoutes from "./routes/config.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import quotationRoutes from "./routes/quotation.routes.js";
@@ -21,7 +22,6 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/health", (req, res) => res.json({ ok: true }));
-
 
 app.use("/api/otp", otpRoutes);
 app.use("/api/auth", authRoutes);
