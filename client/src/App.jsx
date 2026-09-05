@@ -11,6 +11,9 @@ import QuotationsList from './pages/quotations/QuotationsList';
 import QuotationDetail from './pages/quotations/QuotationDetail';
 import ApprovalsList from './pages/approvals/ApprovalsList';
 import ApprovalDetail from './pages/approvals/ApprovalDetail';
+import DealHealth from './pages/dashboard/DealHealth';
+import ReportsPage from './pages/reports/ReportsPage';
+import AdminConfig from './pages/admin/AdminConfig';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleGuard from './routes/RoleGuard';
@@ -19,6 +22,7 @@ import RoleGuard from './routes/RoleGuard';
 // /approvals narrows further to Manager/Finance/Admin via a nested RoleGuard.
 const INTERNAL_ROLES = ['SALES_REP', 'MANAGER', 'FINANCE', 'ADMIN'];
 const APPROVAL_ROLES = ['MANAGER', 'FINANCE', 'ADMIN'];
+const ADMIN_ROLES = ['ADMIN'];
 
 /**
  * Root Index Dispatcher — sends an authenticated user to their landing
@@ -57,6 +61,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/quotations" element={<QuotationsList />} />
               <Route path="/quotations/:id" element={<QuotationDetail />} />
+              <Route path="/deal-health" element={<DealHealth />} />
               <Route
                 path="/approvals"
                 element={
@@ -70,6 +75,22 @@ export default function App() {
                 element={
                   <RoleGuard allowedRoles={APPROVAL_ROLES}>
                     <ApprovalDetail />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <RoleGuard allowedRoles={APPROVAL_ROLES}>
+                    <ReportsPage />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <RoleGuard allowedRoles={ADMIN_ROLES}>
+                    <AdminConfig />
                   </RoleGuard>
                 }
               />

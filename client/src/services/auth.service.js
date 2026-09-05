@@ -41,6 +41,37 @@ export const authService = {
   },
 
   /**
+   * Request an OTP for email verification / login
+   * @param {string} email
+   * @returns {Promise<{ message: string, expiresInSeconds: number }>}
+   */
+  requestOtp: async (email) => {
+    const response = await api.post('/otp/request', { email });
+    return response.data;
+  },
+
+  /**
+   * Verify an OTP
+   * @param {string} email
+   * @param {string} otp
+   * @returns {Promise<{ verified: boolean }>}
+   */
+  verifyOtp: async (email, otp) => {
+    const response = await api.post('/otp/verify', { email, otp });
+    return response.data;
+  },
+
+  /**
+   * Direct OTP login
+   * @param {{ email: string, otp: string, companySlug?: string }} payload
+   * @returns {Promise<{ token: string, landing: string, user?: object, customer?: object }>}
+   */
+  otpLogin: async ({ email, otp, companySlug }) => {
+    const response = await api.post('/auth/otp-login', { email, otp, companySlug });
+    return response.data;
+  },
+
+  /**
    * Centralized client logout
    */
   logout: () => {

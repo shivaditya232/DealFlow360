@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, FileText, ShieldCheck, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, ShieldCheck, Activity, BarChart3, Settings, LogOut } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { APPROVALS_ROLES } from '../../config/roleAccess';
@@ -9,6 +9,9 @@ const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/quotations', label: 'Quotations', icon: FileText },
   { to: '/approvals', label: 'Approvals', icon: ShieldCheck, roles: APPROVALS_ROLES },
+  { to: '/deal-health', label: 'Deal Health', icon: Activity },
+  { to: '/reports', label: 'Reports', icon: BarChart3, roles: APPROVALS_ROLES },
+  { to: '/admin', label: 'Admin & Stock', icon: Settings, roles: ['ADMIN'] },
 ];
 
 function initials(name = '') {

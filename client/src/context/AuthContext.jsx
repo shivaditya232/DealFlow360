@@ -55,6 +55,32 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
+   * OTP Login handler
+   */
+  const otpLogin = useCallback(async ({ email, otp, companySlug, rememberMe = false }) => {
+    const data = await authService.otpLogin({ email, otp, companySlug });
+
+    const determinedAccountType = data.user ? 'INTERNAL' : data.customer ? 'CUSTOMER' : null;
+
+    authStorage.setAuth({
+      token: data.token,
+      user: data.user || null,
+      customer: data.customer || null,
+      landing: data.landing,
+      accountType: determinedAccountType,
+      rememberMe,
+    });
+
+    setToken(data.token);
+    setUser(data.user || null);
+    setCustomer(data.customer || null);
+    setAccountType(determinedAccountType);
+    setLanding(data.landing);
+
+    return data;
+  }, []);
+
+  /**
    * Signup handler
    */
   const signup = useCallback(async (payload) => {
@@ -102,6 +128,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(token),
     isLoading,
     login,
+    otpLogin,
     signup,
     logout,
   };
