@@ -1,0 +1,10 @@
+// Prisma schema stub — models added once the PS is known
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
