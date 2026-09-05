@@ -1,0 +1,2324 @@
+/* ==========================================================================
+   DealFlow360 - Enterprise Design System (Vanilla CSS)
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Neutral / Slate */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Primary Brand (Refined Enterprise Blue/Indigo) */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Accent & Semantic Colors */
+  --color-success-50: #ecfdf5;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-200: #fecaca;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+
+  /* Surface / Canvas Tokens (Light default) */
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-panel: #0b1329;
+  --bg-panel-surface: rgba(255, 255, 255, 0.04);
+  --bg-panel-border: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --border-subtle: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-focus: #2563eb;
+  --border-danger: #ef4444;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  --shadow-focus-primary: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  --shadow-focus-danger: 0 0 0 3px rgba(239, 68, 68, 0.18);
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Architecture Support */
+[data-theme="dark"] {
+  --bg-app: #090d16;
+  --bg-surface: #0f172a;
+  --bg-surface-elevated: #1e293b;
+  --border-subtle: #1e293b;
+  --border-medium: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--color-primary-600);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-700);
+  text-decoration: underline;
+}
+
+/* Focus Utility */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-primary);
+}
+
+/* Keyframes */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==========================================================================
+   UI Component Classes: Button
+   ========================================================================== */
+
+.df-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  gap: 0.5rem;
+}
+
+.df-btn:disabled,
+.df-btn[aria-disabled="true"] {
+  opacity: 0.65;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Button Variants */
+.df-btn-primary {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.df-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+  border-color: #1e40af;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  transform: translateY(-1px);
+}
+
+.df-btn-primary:active:not(:disabled) {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.df-btn-secondary {
+  background-color: var(--color-slate-100);
+  color: var(--color-slate-800);
+  border-color: var(--color-slate-200);
+}
+
+.df-btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-slate-200);
+  color: var(--color-slate-900);
+}
+
+.df-btn-outline {
+  background-color: transparent;
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.df-btn-outline:hover:not(:disabled) {
+  background-color: var(--color-slate-50);
+  border-color: var(--border-medium);
+}
+
+.df-btn-ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+}
+
+.df-btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-slate-100);
+  color: var(--text-primary);
+}
+
+/* Button Sizes */
+.df-btn-sm {
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  font-size: var(--font-size-xs);
+  border-radius: 7px;
+}
+
+.df-btn-md {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: var(--font-size-sm);
+  border-radius: 8px;
+}
+
+.df-btn-lg {
+  height: 3.375rem;     /* 54px enterprise height */
+  min-height: 3.375rem;
+  padding: 0 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: 9px;
+}
+
+.df-btn-full {
+  width: 100%;
+}
+
+/* Spinner */
+.df-btn-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   UI Component Classes: Form Controls (Input & PasswordInput)
+   ========================================================================== */
+
+.df-form-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.df-label {
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 500;
+  color: #0f172a;
+  margin-bottom: 0.5rem; /* 8px spacing to input */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+
+[data-theme="dark"] .df-label {
+  color: var(--color-slate-200);
+}
+
+.df-label-required {
+  color: #ef4444;
+  margin-left: 3px;
+  font-weight: 500;
+}
+
+.df-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.df-input {
+  width: 100%;
+  height: 3.375rem; /* 54px enterprise height */
+  min-height: 3.375rem;
+  padding: 0 1rem;
+  font-family: var(--font-family);
+  font-size: 0.9375rem;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #D8DEE8;
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-sizing: border-box;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.df-input::placeholder {
+  color: #94a3b8;
+}
+
+.df-input:hover:not(:disabled):not(:focus) {
+  border-color: #94a3b8;
+}
+
+.df-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.df-input:disabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.df-input-error {
+  border-color: #ef4444 !important;
+}
+
+.df-input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14) !important;
+}
+
+.df-input-has-end-action {
+  padding-right: 3.25rem; /* 52px */
+}
+
+.df-input-has-start-icon {
+  padding-left: 3rem; /* 48px */
+}
+
+.df-input-start-icon {
+  position: absolute;
+  left: 1rem; /* 16px */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Password Eye Icon Wrapper - mathematically centered & fixed on right side */
+.df-input-end-action {
+  position: absolute;
+  right: 1rem; /* 16px */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;  /* 36px comfortable click target */
+  height: 2.25rem; /* 36px comfortable click target */
+  z-index: 2;
+}
+
+.df-input-action-btn {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.df-input-action-btn:hover {
+  color: #1e293b;
+  background-color: #f1f5f9;
+}
+
+.df-input-action-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+/* Input Feedback Slot (Prevents Layout Shift on Error) */
+.df-input-feedback-slot {
+  min-height: 1.25rem; /* 20px reserved slot */
+  margin-top: 0.375rem;
+  display: flex;
+  align-items: center;
+}
+
+.df-helper-text {
+  font-size: var(--font-size-xs);
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.df-error-text {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-size-xs);
+  color: #ef4444;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Checkbox */
+.df-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  user-select: none;
+  line-height: 1;
+}
+
+.df-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 5px;
+  background-color: var(--bg-surface);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.df-checkbox:hover {
+  border-color: #94a3b8;
+}
+
+.df-checkbox:checked {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+.df-checkbox:checked::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.3rem;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(0.5px, -1px);
+}
+
+.df-checkbox:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ==========================================================================
+   Login Page Layout & Brand Panel
+   ========================================================================== */
+
+.df-login-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-surface);
+}
+
+/* ==========================================================================
+   Left Brand Panel (Premium Enterprise System)
+   ========================================================================== */
+
+.df-brand-panel {
+  flex: 0 0 46%;
+  width: 46%;
+  min-height: 100vh;
+  background-color: #070a13;
+  background-image: 
+    radial-gradient(ellipse 75% 55% at 85% 15%, rgba(37, 99, 235, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 65% 50% at 10% 85%, rgba(30, 58, 138, 0.12) 0%, transparent 60%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-inverse);
+  padding: clamp(3rem, 5vw, 4.5rem) clamp(2.5rem, 4.5vw, 4.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Subtle Architectural Grid Overlay */
+.df-brand-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, black 40%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ambient Ribbon Trace */
+.df-brand-ambient-ribbon {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.df-brand-ambient-ribbon svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.df-brand-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  gap: 2.5rem;
+}
+
+/* Top Brand Lockup */
+.df-brand-header-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.df-brand-logo-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.df-brand-logo-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.df-brand-wordmark {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+}
+
+.df-brand-tagline-descriptor {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-left: 0.125rem;
+}
+
+/* Main Hero Typography Area */
+.df-brand-hero-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.df-brand-headline {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  color: #f8fafc;
+}
+
+.df-headline-row {
+  display: block;
+}
+
+.df-headline-accent {
+  color: #60a5fa;
+  background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 55%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.df-brand-support-text {
+  font-size: clamp(0.875rem, 1.1vw, 0.9375rem);
+  line-height: 1.65;
+  color: #94a3b8;
+  max-width: 440px;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   Quote-to-Cash Flow: Minimal Enterprise Architecture Pipeline
+   ========================================================================== */
+
+.df-lifecycle-centerpiece {
+  margin: 0.5rem 0;
+}
+
+.df-flow-kicker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.875rem;
+}
+
+.df-flow-kicker {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.df-flow-subtle-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #60a5fa;
+}
+
+.df-flow-pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.df-flow-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.125rem 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 12px 30px -6px rgba(0, 0, 0, 0.45);
+}
+
+.df-flow-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: center;
+  flex: 0 0 auto;
+  transition: transform var(--transition-fast);
+}
+
+.df-flow-stage:hover {
+  transform: translateY(-2px);
+}
+
+.df-stage-node-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+/* Semantic Color Accents */
+/* Quotation: Blue */
+.df-stage-blue .df-stage-node-pill {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(37, 99, 235, 0.15);
+}
+.df-stage-blue:hover .df-stage-node-pill {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+  border-color: #60a5fa;
+}
+.df-stage-blue .df-stage-num {
+  color: #93c5fd;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.df-stage-blue .df-stage-icon {
+  color: #60a5fa;
+}
+.df-stage-blue .df-stage-status-tag {
+  color: #93c5fd;
+}
+
+/* Approval: Emerald Green */
+.df-stage-green .df-stage-node-pill {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+}
+.df-stage-green:hover .df-stage-node-pill {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  border-color: #34d399;
+}
+.df-stage-green .df-stage-num {
+  color: #6ee7b7;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.df-stage-green .df-stage-icon {
+  color: #34d399;
+}
+.df-stage-green .df-stage-status-tag {
+  color: #6ee7b7;
+}
+
+/* Negotiation: Amber */
+.df-stage-amber .df-stage-node-pill {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.15);
+}
+.df-stage-amber:hover .df-stage-node-pill {
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+  border-color: #fbbf24;
+}
+.df-stage-amber .df-stage-num {
+  color: #fde68a;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.df-stage-amber .df-stage-icon {
+  color: #fbbf24;
+}
+.df-stage-amber .df-stage-status-tag {
+  color: #fde68a;
+}
+
+/* Fulfillment: Violet / Purple */
+.df-stage-purple .df-stage-node-pill {
+  border-color: rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.15);
+}
+.df-stage-purple:hover .df-stage-node-pill {
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+  border-color: #c084fc;
+}
+.df-stage-purple .df-stage-num {
+  color: #d8b4fe;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.df-stage-purple .df-stage-icon {
+  color: #c084fc;
+}
+.df-stage-purple .df-stage-status-tag {
+  color: #d8b4fe;
+}
+
+/* Billing: Coral / Red */
+.df-stage-coral .df-stage-node-pill {
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.15);
+}
+.df-stage-coral:hover .df-stage-node-pill {
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+  border-color: #fb7185;
+}
+.df-stage-coral .df-stage-num {
+  color: #fda4af;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.df-stage-coral .df-stage-icon {
+  color: #fb7185;
+}
+.df-stage-coral .df-stage-status-tag {
+  color: #fda4af;
+}
+
+.df-stage-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.df-stage-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.df-stage-status-tag {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.df-flow-line-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.df-flow-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(96, 165, 250, 0.35), rgba(255, 255, 255, 0.08));
+}
+
+.df-flow-arrow {
+  position: absolute;
+  color: #60a5fa;
+  opacity: 0.6;
+  background: #070a13;
+  padding: 0 1px;
+}
+
+/* ==========================================================================
+   Bottom Metrics Section (with green upward arrow and thin vertical dividers)
+   ========================================================================== */
+
+.df-brand-bottom-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  margin-top: auto;
+}
+
+.df-metrics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.df-metrics-header-caption {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.df-metrics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.df-metric-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.df-metric-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.df-metric-number {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.df-metric-arrow-up {
+  color: #10b981;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+}
+
+.df-metric-desc {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  font-weight: 400;
+}
+
+.df-metric-divider {
+  width: 1px;
+  height: 2.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.df-brand-footer-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+}
+
+.df-footer-tag {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.df-footer-copyright {
+  color: #475569;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   Right Side: Enterprise Login Form Panel
+   ========================================================================== */
+
+.df-form-panel {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2.5rem, 5vw, 4.5rem) clamp(2rem, 5vw, 4.5rem);
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.df-form-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.df-form-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2.5rem; /* 40px between subtitle and form */
+}
+
+.df-form-title {
+  font-size: 2.25rem; /* 36px on desktop */
+  font-weight: 700;
+  color: #090d1a;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  margin-bottom: 0.625rem; /* 10px spacing */
+}
+
+.df-form-subtitle {
+  font-size: 1rem; /* 16px */
+  color: #64748b;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.df-login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* 24px between field groups */
+}
+
+/* Remember Me & Forgot Password Row - strictly opposite sides */
+.df-form-options {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -0.5rem; /* 16px from password input */
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+.df-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: #334155;
+  user-select: none;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.df-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.125rem; /* 18px */
+  height: 1.125rem;
+  border: 1.5px solid #D8DEE8;
+  border-radius: 5px;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+  margin: 0;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.df-checkbox:hover {
+  border-color: #94a3b8;
+}
+
+.df-checkbox:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.df-checkbox:checked::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.3rem;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) translate(0.5px, -1px);
+}
+
+.df-checkbox:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.df-forgot-link {
+  font-size: 0.9375rem;
+  color: #2563eb;
+  font-weight: 500;
+  transition: color 150ms ease;
+  white-space: nowrap;
+}
+
+.df-forgot-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.df-form-footer {
+  margin-top: 1.875rem; /* 30px spacing below button */
+  text-align: center;
+  font-size: 0.9375rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.df-signup-link {
+  font-weight: 600;
+  color: #2563eb;
+  transition: color 150ms ease;
+}
+
+.df-signup-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Simulation / Feedback Banner */
+.df-status-banner {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+
+.df-status-banner-success {
+  background-color: var(--color-success-50);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-success-700);
+}
+
+.df-status-banner-error {
+  background-color: var(--color-danger-50);
+  border: 1px solid var(--color-danger-200);
+  color: var(--color-danger-700);
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+/* Large Desktop / Wide Screens */
+@media (min-width: 1440px) {
+  .df-brand-panel {
+    padding: 5rem 5rem;
+  }
+}
+
+/* Tablet (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .df-brand-panel {
+    flex: 0 0 44%;
+    width: 44%;
+    padding: 3rem 2rem;
+  }
+
+  .df-brand-inner {
+    gap: 2rem;
+  }
+
+  .df-brand-headline {
+    font-size: 2.125rem;
+  }
+
+  .df-flow-track {
+    padding: 0.875rem 0.625rem;
+    gap: 0.125rem;
+  }
+
+  .df-stage-name {
+    font-size: 0.6875rem;
+  }
+
+  .df-stage-status-tag {
+    display: none;
+  }
+
+  .df-metrics-row {
+    gap: 0.75rem;
+  }
+
+  .df-metric-number {
+    font-size: 1.5rem;
+  }
+
+  .df-metric-desc {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile & Small Screens (max-width: 768px) */
+@media (max-width: 768px) {
+  .df-login-container {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .df-brand-panel {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: auto;
+    padding: 2.25rem 1.5rem 1.75rem 1.5rem;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .df-brand-bg-grid,
+  .df-brand-ambient-ribbon {
+    display: none;
+  }
+
+  .df-brand-inner {
+    gap: 1.25rem;
+  }
+
+  .df-brand-header-group {
+    gap: 0.375rem;
+  }
+
+  .df-brand-tagline-descriptor {
+    display: none;
+  }
+
+  .df-brand-hero-section {
+    gap: 0.625rem;
+  }
+
+  .df-brand-headline {
+    font-size: 1.625rem;
+    line-height: 1.2;
+  }
+
+  .df-brand-support-text {
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Drastically simplify mobile left panel: hide metrics and lifecycle visualization */
+  .df-lifecycle-centerpiece {
+    display: none;
+  }
+
+  .df-brand-bottom-section {
+    display: none;
+  }
+
+  .df-form-panel {
+    width: 100%;
+    min-height: auto;
+    padding: 2.5rem 1rem 3.5rem 1rem;
+    box-sizing: border-box;
+  }
+
+  .df-form-container {
+    width: calc(100% - 32px);
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .df-form-title {
+    font-size: 1.75rem;
+  }
+}
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   DealFlow360 Signup Page Styles: Comfortable Enterprise SaaS Proportions
+   ========================================================================== */
+
+.df-signup-page-container {
+  min-height: 100vh;
+  display: flex;
+  width: 100%;
+  background-color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   LEFT PANEL: DEALFLOW360 OPERATING FLOW & INTELLIGENCE ARCHITECTURE
+   -------------------------------------------------------------------------- */
+
+.df-signup-brand-panel {
+  flex: 0 0 46%;
+  width: 46%;
+  min-height: 100vh;
+  padding: clamp(2.5rem, 4.5vh, 4rem) clamp(2.5rem, 4vw, 4.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.df-signup-brand-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  gap: clamp(1.25rem, 2.2vh, 1.875rem);
+  text-align: left;
+  align-items: stretch;
+}
+
+/* Brand Header */
+.df-signup-brand-header {
+  margin-bottom: 0.25rem;
+}
+
+/* Hero Section: Editorial typography with slightly narrower text width */
+.df-signup-hero-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.df-signup-hero-section .df-brand-headline {
+  font-size: clamp(2rem, 2.6vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.df-signup-support-text {
+  max-width: 380px;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   3. PREMIUM PRODUCT PREVIEW: DealFlow360 Operating System (Deal Pipeline)
+   -------------------------------------------------------------------------- */
+
+.df-preview-container {
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 15, 29, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 
+    0 24px 48px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(59, 130, 246, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Subtle top edge glow */
+.df-preview-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.45), transparent);
+  pointer-events: none;
+}
+
+/* Window Titlebar */
+.df-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.125rem;
+  background: rgba(14, 21, 38, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.df-preview-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.df-preview-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.df-pdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.df-pdot-red {
+  background-color: #ef4444;
+}
+
+.df-pdot-amber {
+  background-color: #f59e0b;
+}
+
+.df-pdot-green {
+  background-color: #10b981;
+}
+
+.df-preview-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+/* Live Badge with subtle pulse */
+.df-preview-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+.df-preview-live-pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+  animation: df-live-pulse-anim 2.5s infinite ease-in-out;
+}
+
+@keyframes df-live-pulse-anim {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+/* Sub-toolbar */
+.df-preview-subbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1.125rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(11, 17, 32, 0.4);
+}
+
+.df-preview-subbar-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  letter-spacing: 0.02em;
+}
+
+.df-preview-subbar-tag {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Deals List */
+.df-preview-deals-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1.125rem;
+  gap: 0.625rem;
+}
+
+.df-preview-deal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(18, 25, 44, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.df-preview-deal-card:hover {
+  background: rgba(23, 33, 58, 0.75);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.df-preview-deal-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.df-preview-deal-entity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.df-preview-company {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.df-preview-product {
+  font-size: 0.6875rem;
+  color: #64748b;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.df-preview-deal-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.df-preview-value {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Status Badges */
+.df-preview-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.df-status-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Status: Amber (Pending / Required) */
+.df-status-amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.df-status-amber .df-status-dot {
+  background-color: #f59e0b;
+}
+
+/* Status: Green (Approved / Healthy) */
+.df-status-green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.df-status-green .df-status-dot {
+  background-color: #10b981;
+}
+
+/* Status: Blue (Negotiation / In Progress) */
+.df-status-blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+.df-status-blue .df-status-dot {
+  background-color: #3b82f6;
+}
+
+/* Progress Section */
+.df-preview-progress-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.15rem;
+}
+
+.df-preview-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.df-preview-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 300ms ease;
+}
+
+.df-progress-amber {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.df-progress-green {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.df-progress-blue {
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+}
+
+.df-preview-progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.5625rem;
+}
+
+.df-preview-stage-text {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.df-preview-percent {
+  color: #94a3b8;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4. COMPACT INTELLIGENCE STRIP */
+.df-preview-intel-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1.125rem;
+  background: rgba(12, 18, 34, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.df-preview-intel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+}
+
+.df-preview-intel-label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.df-preview-intel-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.df-intel-signal-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.df-intel-val-green {
+  color: #34d399;
+}
+.df-intel-val-green .df-intel-signal-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.6);
+}
+
+.df-intel-val-amber {
+  color: #fbbf24;
+}
+.df-intel-val-amber .df-intel-signal-dot {
+  background-color: #f59e0b;
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.6);
+}
+
+.df-intel-val-blue {
+  color: #f8fafc;
+}
+.df-intel-val-blue .df-intel-signal-dot {
+  background-color: #3b82f6;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
+}
+
+.df-preview-intel-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 0 0.875rem;
+  flex-shrink: 0;
+}
+
+
+/* --------------------------------------------------------------------------
+   5. BOTTOM METRICS & BRANDING
+   -------------------------------------------------------------------------- */
+
+.df-signup-bottom-section {
+  gap: 1.25rem;
+  margin-top: 0;
+}
+
+.df-signup-bottom-section .df-metrics-container {
+  padding-top: 1.125rem;
+}
+
+.df-signup-bottom-section .df-metric-number {
+  font-size: 1.75rem;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT PANEL: COMFORTABLE ENTERPRISE FORM SPACING
+   -------------------------------------------------------------------------- */
+
+.df-signup-form-panel {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(2.5rem, 5vh, 4rem) clamp(2rem, 5vw, 4.5rem);
+  background-color: #ffffff;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.df-signup-form-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Header Spacing: 14px heading->subtitle, 32px subtitle->first field */
+.df-signup-form-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem; /* 32px: Subtitle -> First Field (within 32-40px) */
+}
+
+.df-signup-form-title {
+  font-size: 2rem; /* 32px enterprise headline */
+  font-weight: 700;
+  color: #090d1a;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 0.875rem; /* 14px: Heading -> Subtitle (within 12-16px) */
+}
+
+.df-signup-form-subtitle {
+  font-size: 1rem; /* 16px */
+  color: #64748b;
+  line-height: 1.5;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Form Fields Grid: 24px between form fields (within 22-28px) */
+.df-signup-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* 24px */
+}
+
+.df-signup-form .df-form-group {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Field Label: 9px gap to input (within 8-10px) */
+.df-signup-form .df-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5625rem; /* 9px */
+  color: #0f172a;
+}
+
+/* Input Height: 54px substantial enterprise height (within 52-58px) */
+.df-signup-form .df-input {
+  height: 3.375rem; /* 54px */
+  min-height: 3.375rem;
+  padding: 0 1rem;
+  font-size: 0.9375rem;
+  border-radius: 8px;
+  border: 1px solid #D8DEE8;
+  color: #0f172a;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.df-signup-form .df-input-has-start-icon {
+  padding-left: 3rem; /* 48px */
+}
+
+.df-signup-form .df-input-has-end-action {
+  padding-right: 3.25rem; /* 52px */
+}
+
+.df-signup-form .df-input-start-icon {
+  left: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.df-signup-form .df-input-end-action {
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.df-signup-form .df-input-action-btn {
+  border-radius: 6px;
+}
+
+/* Feedback Slot: 7px below input (within 6-8px) */
+.df-signup-form .df-input-feedback-slot {
+  min-height: 1.125rem; /* 18px reserved slot */
+  margin-top: 0.4375rem; /* 7px */
+  display: flex;
+  align-items: center;
+}
+
+.df-signup-form .df-helper-text {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.df-signup-form .df-error-text {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Password Strength Meter */
+.df-signup-form .df-password-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.df-signup-form .df-password-strength-container {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  box-sizing: border-box;
+}
+
+.df-signup-form .df-strength-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.df-signup-form .df-strength-caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.df-signup-form .df-strength-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.df-signup-form .df-strength-meter {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 4px;
+}
+
+.df-signup-form .df-strength-bar {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+}
+
+.df-signup-form .df-strength-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.875rem;
+  margin-top: 0.125rem;
+}
+
+.df-signup-form .df-check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  color: #64748b;
+}
+
+.df-signup-form .df-check-item.df-check-met {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+/* Confirm Password -> Account Type & Role: 32px gap (within 28-34px) */
+.df-signup-form .df-role-selector-group {
+  width: 100%;
+  margin-top: 0.5rem; /* 24px + 8px = 32px total spacing */
+}
+
+.df-signup-form .df-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5625rem; /* 9px */
+}
+
+.df-signup-form .df-role-caption-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Role Selector Container: Comfortable Breathing Room */
+.df-signup-form .df-role-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #D8DEE8;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.df-signup-form .df-role-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.df-signup-form .df-role-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.df-signup-form .df-role-section-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.df-signup-form .df-role-section-pill {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  background-color: #e2e8f0;
+  color: #475569;
+  border-radius: 9999px;
+}
+
+.df-signup-form .df-pill-customer {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.df-signup-form .df-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+}
+
+.df-signup-form .df-role-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  background-color: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+  user-select: none;
+  min-height: 68px;
+  box-sizing: border-box;
+}
+
+.df-signup-form .df-role-card:hover:not(:disabled) {
+  border-color: #93c5fa;
+  background-color: #fbfdff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
+}
+
+.df-signup-form .df-role-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.df-signup-form .df-role-card-selected {
+  border-color: #2563eb !important;
+  background-color: #eff6ff !important;
+  box-shadow: 0 0 0 1px #2563eb, 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+}
+
+.df-signup-form .df-role-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.df-signup-form .df-role-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: #f1f5f9;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.df-signup-form .df-role-card-selected .df-role-icon-box {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.df-signup-form .df-role-radio-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.df-signup-form .df-role-card-selected .df-role-radio-indicator {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.df-signup-form .df-role-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.df-signup-form .df-role-card-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.df-signup-form .df-role-card-desc {
+  font-size: 0.6875rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+/* Customer Card */
+.df-signup-form .df-role-section-customer {
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.df-signup-form .df-role-card-portal {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  min-height: 56px;
+}
+
+.df-signup-form .df-role-portal-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.df-signup-form .df-role-portal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.df-signup-form .df-role-portal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.df-signup-form .df-icon-portal {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.df-signup-form .df-portal-tag {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  background-color: #dcfce7;
+  color: #15803d;
+  border-radius: 4px;
+}
+
+.df-signup-form .df-role-card-portal.df-role-card-selected {
+  border-color: #059669 !important;
+  background-color: #f0fdf4 !important;
+  box-shadow: 0 0 0 1px #059669, 0 4px 12px rgba(16, 185, 129, 0.08) !important;
+}
+
+.df-signup-form .df-role-card-portal.df-role-card-selected .df-icon-portal {
+  background-color: #059669;
+  color: #ffffff;
+}
+
+.df-signup-form .df-role-card-portal.df-role-card-selected .df-role-radio-indicator {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+/* Role Selector -> Create Account Button: 28px gap (within 24-30px) */
+.df-signup-submit-btn {
+  margin-top: 0.25rem; /* 24px + 4px = 28px total gap */
+  height: 3.375rem; /* 54px substantial enterprise button */
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* Button -> Sign in link: 26px gap (within 24-30px) */
+.df-signup-form-container .df-form-footer {
+  margin-top: 1.625rem; /* 26px */
+  font-size: 0.9375rem; /* 15px */
+  gap: 0.375rem;
+}
+
+/* Responsive Adaptations for Signup */
+@media (max-width: 1024px) {
+  .df-signup-brand-panel {
+    flex: 0 0 44%;
+    width: 44%;
+    padding: 2.5rem 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .df-signup-page-container {
+    flex-direction: column;
+  }
+
+  .df-signup-brand-panel {
+    width: 100%;
+    flex: 0 0 auto;
+    min-height: auto;
+    padding: 2.25rem 1.5rem 1.5rem 1.5rem;
+  }
+
+  .df-signup-brand-inner {
+    gap: 1.25rem;
+  }
+
+  .df-preview-container {
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  .df-preview-deals-list {
+    padding: 0.625rem 0.875rem;
+    gap: 0.5rem;
+  }
+
+  .df-preview-deal-card {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .df-preview-intel-strip {
+    padding: 0.5rem 0.875rem;
+  }
+
+  .df-preview-intel-label {
+    font-size: 0.5rem;
+  }
+
+  .df-preview-intel-val {
+    font-size: 0.6875rem;
+  }
+
+  .df-signup-bottom-section {
+    display: none;
+  }
+
+  .df-signup-form-panel {
+    width: 100%;
+    min-height: auto;
+    padding: 2.25rem 1.25rem 3.5rem 1.25rem;
+  }
+
+  .df-signup-form-container {
+    max-width: 100%;
+  }
+
+  .df-signup-form .df-role-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
