@@ -1,6 +1,7 @@
 import redis from "../config/redis.js";
 import { httpError } from "../utils/httpError.js";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -120,20 +121,44 @@ export async function verifyOtp(email, submittedOtp) {
   return { verified: true };
 }
 
-// ── Email sender (stub) ───────────────────────────────────────────────────────
+// ── Email sender ──────────────────────────────────────────────────────────────
 
 /**
- * Sends the OTP to the user's email address.
- *
- * TODO: replace the console.log with a real provider:
- *   - Nodemailer + SMTP for self-hosted
- *   - Resend (resend.com) for managed transactional email
- *   - AWS SES for scale
+ * Nodemailer transporter — Gmail SMTP with App Password auth.
+ * Set SMTP_USER and SMTP_PASS in .env (use a Gmail App Password, not your
+ * real Gmail password — generate one at https://myaccount.google.com/apppasswords).
+ */
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+/**
+ * Sends the OTP to the user's email address via Gmail SMTP.
  *
  * @param {string} email
  * @param {string} otp
  */
 async function sendOtpEmail(email, otp) {
-  // DEV-ONLY: log to console so you can grab the OTP without a real mail server
-  console.log(`[DEV ONLY] OTP for ${email}: ${otp}`);
+  await transporter.sendMail({
+    from: `"DealFlow360" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Your DealFlow360 OTP Code",
+    text: `Your one-time password is: ${otp}\n\nThis code expires in 2 minutes. Do not share it with anyone.`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
+        <h2 style="margin:0 0 8px;color:#111827">Your OTP Code</h2>
+        <p style="color:#6b7280;margin:0 0 24px">Use the code below to verify your identity on DealFlow360.</p>
+        <div style="font-size:36px;font-weight:700;letter-spacing:8px;color:#4f46e5;text-align:center;padding:16px;background:#f5f3ff;border-radius:8px">
+          ${otp}
+        </div>
+        <p style="color:#9ca3af;font-size:13px;margin:24px 0 0">
+          This code expires in <strong>2 minutes</strong>. If you didn't request this, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  });
 }
