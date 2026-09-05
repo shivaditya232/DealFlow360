@@ -71,7 +71,7 @@ async function consolidateBackorders(companyId, productId, stockLevel) {
         include: { quotation: { select: { id: true, companyId: true } } },
       },
     },
-    orderBy: { createdAt: "asc" }, // FIFO — oldest backorder served first
+    orderBy: { id: "asc" }, // FIFO — oldest backorder served first
   });
 
   let remainingNewStock =

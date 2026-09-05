@@ -135,7 +135,10 @@ export async function verifyOtp(email, submittedOtp) {
 
   // ── 3. Compare OTPs ─────────────────────────────────────────────────────────
   if (storedOtp !== submittedOtp) {
-    throw httpError(400, "Incorrect OTP.");
+    const remaining = Math.max(0, MAX_VERIFY_ATTEMPTS - attempts);
+    const err = httpError(400, `Incorrect OTP. ${remaining} attempt(s) remaining.`);
+    err.remainingAttempts = remaining;
+    throw err;
   }
 
   // ── 4. Correct — delete both keys immediately (single-use guarantee) ─────────

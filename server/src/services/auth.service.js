@@ -3,7 +3,7 @@ import { hashPassword, comparePassword } from "../utils/password.util.js";
 import { signAccessToken } from "../utils/jwt.util.js";
 import { assertNotRateLimited, recordFailedAttempt, clearFailedAttempts } from "../utils/rateLimit.util.js";
 import { httpError } from "../utils/httpError.js";
-import { isEmailVerified, consumeEmailVerification } from "./otp.service.js";
+import { isEmailVerified, consumeEmailVerification, verifyOtp } from "./otp.service.js";
 
 // Login always needs an EXISTING company (you can't log in to a workspace
 // that hasn't been created yet).
@@ -161,4 +161,58 @@ export async function login({ companySlug, email, password }) {
 
   await recordFailedAttempt(companySlug, email);
   throw httpError(401, "Invalid credentials");
+}
+
+export async function otpLogin({ email, otp, companySlug }) {
+  // 1. Verify OTP first (burns OTP on success, throws on mismatch/expiry with remaining attempts)
+  await verifyOtp(email, otp);
+  await consumeEmailVerification(email);
+
+  // 2. Resolve company if supplied
+  let company = null;
+  if (companySlug) {
+    company = await prisma.company.findUnique({ where: { slug: companySlug } });
+  }
+
+  // 3. Look for Internal User
+  const userWhere = companySlug && company
+    ? { companyId_email: { companyId: company.id, email } }
+    : { email };
+
+  const user = await prisma.user.findFirst({
+    where: userWhere,
+    include: { company: true },
+  });
+
+  if (user) {
+    const token = buildToken({ id: user.id, companyId: user.companyId, accountType: "INTERNAL", role: user.role });
+    return {
+      token,
+      landing: "DASHBOARD",
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      company: { id: user.company.id, slug: user.company.slug, name: user.company.name },
+    };
+  }
+
+  // 4. Look for Customer
+  const customerWhere = companySlug && company
+    ? { companyId_email: { companyId: company.id, email } }
+    : { email };
+
+  const customer = await prisma.customer.findFirst({
+    where: customerWhere,
+    include: { company: true },
+  });
+
+  if (customer) {
+    const token = buildToken({ id: customer.id, companyId: customer.companyId, accountType: "CUSTOMER", role: null });
+    return {
+      token,
+      landing: "PORTAL",
+      customer: { id: customer.id, name: customer.name, email: customer.email },
+      company: { id: customer.company.id, slug: customer.company.slug, name: customer.company.name },
+    };
+  }
+
+  throw httpError(404, "No account found associated with this email address. Please sign up.");
 }

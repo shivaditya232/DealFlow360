@@ -20,3 +20,16 @@ export async function login(req, res, next) {
     next(err);
   }
 }
+
+export async function otpLogin(req, res, next) {
+  try {
+    const { email, otp, companySlug } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Email and OTP are required" });
+    }
+    const result = await authService.otpLogin({ email: email.trim().toLowerCase(), otp: otp.trim(), companySlug: companySlug?.trim() });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+}

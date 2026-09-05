@@ -103,3 +103,23 @@ export async function repRespondToProposal(req, res, next) {
     next(err);
   }
 }
+
+export async function getOrders(req, res, next) {
+  try {
+    const { sub: customerId, companyId } = req.auth;
+    const result = await portalService.getCustomerOrders(customerId, companyId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getBilling(req, res, next) {
+  try {
+    const { sub: customerId, companyId } = req.auth;
+    const result = await portalService.getCustomerBilling(customerId, companyId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

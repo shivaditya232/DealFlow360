@@ -642,3 +642,129 @@ export async function executeAcceptFlow(actorId, actorType, companyId, quotation
     blendedRiskScore: updatedQuotation.blendedRiskScore,
   };
 }
+
+// ─── Portal: orders & fulfillment tracking ────────────────────────────────────
+
+export async function getCustomerOrders(customerId, companyId) {
+  const splits = await prisma.fulfillmentSplit.findMany({
+    where: {
+      quotationLine: {
+        quotation: {
+          customerId,
+          companyId,
+        },
+      },
+    },
+    include: {
+      warehouse: { select: { id: true, name: true, shippingCostWeight: true } },
+      quotationLine: {
+        include: {
+          product: { select: { id: true, name: true, category: true } },
+          quotation: { select: { id: true, status: true, createdAt: true } },
+        },
+      },
+    },
+    orderBy: { id: "desc" },
+  });
+
+  return splits.map((s) => ({
+    id: s.id,
+    quotationId: s.quotationLine.quotation.id,
+    quotationStatus: s.quotationLine.quotation.status,
+    productName: s.quotationLine.product.name,
+    category: s.quotationLine.product.category,
+    quantityFulfilled: s.quantityFulfilled,
+    totalQuantity: s.quotationLine.quantity,
+    isBackorder: s.isBackorder,
+    status: s.isBackorder ? "BACKORDERED" : "SHIPPED",
+    warehouseName: s.warehouse.name,
+    shippingCostWeight: Number(s.warehouse.shippingCostWeight),
+    fulfilledAt: s.fulfilledAt,
+    createdAt: s.quotationLine.quotation.createdAt,
+  }));
+}
+
+// ─── Portal: billing & subscriptions ──────────────────────────────────────────
+
+export async function getCustomerBilling(customerId, companyId) {
+  const subscriptions = await prisma.subscription.findMany({
+    where: {
+      quotationLine: {
+        quotation: {
+          customerId,
+          companyId,
+        },
+      },
+    },
+    include: {
+      plan: true,
+      quotationLine: {
+        include: {
+          product: { select: { name: true, category: true } },
+          quotation: { select: { id: true, status: true } },
+        },
+      },
+      billingEvents: {
+        include: {
+          payments: true,
+        },
+        orderBy: { dueDate: "desc" },
+      },
+    },
+    orderBy: { id: "desc" },
+  });
+
+  const oneTimeInvoices = [];
+  const recurringSubscriptions = [];
+
+  for (const sub of subscriptions) {
+    const isOneTime = sub.plan.name === "__ONE_TIME_STUB__" || sub.quotationLine.lineType === "ONE_TIME";
+
+    for (const ev of sub.billingEvents) {
+      const isPaid = ev.payments.length > 0;
+      const invoiceData = {
+        id: ev.id,
+        subscriptionId: sub.id,
+        quotationId: sub.quotationLine.quotation.id,
+        productName: sub.quotationLine.product.name,
+        type: ev.type,
+        amount: Number(ev.amount),
+        dueDate: ev.dueDate,
+        status: isPaid ? "PAID" : new Date(ev.dueDate) < new Date() ? "OVERDUE" : "PENDING",
+        paidAt: isPaid ? ev.payments[0].paidAt : null,
+      };
+
+      if (isOneTime) {
+        oneTimeInvoices.push(invoiceData);
+      } else {
+        // Also keep track inside recurring sub
+      }
+    }
+
+    if (!isOneTime) {
+      recurringSubscriptions.push({
+        id: sub.id,
+        quotationId: sub.quotationLine.quotation.id,
+        productName: sub.quotationLine.product.name,
+        planName: sub.plan.name,
+        billingCycle: sub.plan.billingCycle,
+        status: sub.status,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        nextBillingDate: sub.nextBillingDate,
+        amount: Number(sub.quotationLine.unitPrice) * sub.quotationLine.quantity * (1 - Number(sub.quotationLine.discountPercent) / 100),
+        events: sub.billingEvents.map((ev) => ({
+          id: ev.id,
+          type: ev.type,
+          amount: Number(ev.amount),
+          dueDate: ev.dueDate,
+          status: ev.payments.length > 0 ? "PAID" : new Date(ev.dueDate) < new Date() ? "OVERDUE" : "PENDING",
+        })),
+      });
+    }
+  }
+
+  return {
+    oneTimeInvoices,
+    recurringSubscriptions,
+  };
+}

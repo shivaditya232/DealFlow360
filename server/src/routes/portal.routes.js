@@ -9,6 +9,8 @@ import {
   customerAcceptProposal,
   repRespondToProposal,
   getProfile,
+  getOrders,
+  getBilling,
 } from "../controllers/portal.controller.js";
 
 const router = Router();
@@ -19,6 +21,12 @@ router.use(authenticate);
 // ── Profile ───────────────────────────────────────────────────────────────────
 // GET /api/portal/profile  → name, email, tier, reliabilityScore, lastScoreChange
 router.get("/profile", getProfile);
+
+// ── Orders & Billing ──────────────────────────────────────────────────────────
+// GET /api/portal/orders   → customer fulfillment splits (shipped vs backordered)
+// GET /api/portal/billing  → one-time invoices and recurring subscriptions
+router.get("/orders", getOrders);
+router.get("/billing", getBilling);
 
 // ── Dashboard: list quotations ────────────────────────────────────────────────
 // GET /api/portal/quotations           → all visible quotations (sorted lastActivityAt desc)

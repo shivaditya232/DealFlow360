@@ -219,7 +219,15 @@ export async function getApprovalDetail(companyId, quotationId) {
   const quotation = await prisma.quotation.findFirst({
     where: { id: quotationId, companyId },
     include: {
-      customer: true,
+      customer: {
+        include: {
+          scoreEvents: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            include: { scoreReason: { select: { label: true } } },
+          },
+        },
+      },
       lines: { include: { product: true } },
       approvalSteps: { include: { approver: { select: { name: true } } }, orderBy: { stepOrder: "asc" } },
     },
@@ -240,11 +248,19 @@ export async function getApprovalDetail(companyId, quotationId) {
   });
   const combinedAudit = [...auditTrail, ...stepAudit].sort((a, b) => a.createdAt - b.createdAt);
 
+  const lastScoreEvent = quotation.customer.scoreEvents?.[0];
+
   return {
     id: quotation.id,
     status: quotation.status,
     blendedRiskScore: quotation.blendedRiskScore,
-    customer: { id: quotation.customer.id, name: quotation.customer.name, tier: quotation.customer.tier },
+    customer: {
+      id: quotation.customer.id,
+      name: quotation.customer.name,
+      tier: quotation.customer.tier,
+      reliabilityScore: quotation.customer.reliabilityScore,
+      latestScoreReason: lastScoreEvent?.scoreReason?.label ?? lastScoreEvent?.note ?? "No recent score changes",
+    },
     lines: quotation.lines.map((line) => ({
       id: line.id,
       productName: line.product.name,
