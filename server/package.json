@@ -11,15 +11,17 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "express": "^4.19.2",
     "@prisma/client": "^5.20.0",
-    "zod": "^3.23.8",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "ioredis": "^5.4.1"
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "prisma": "^5.20.0",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "prisma": "^5.20.0"
   }
 }
