@@ -106,14 +106,10 @@ export default function CustomerPortalShell() {
   return (
     <div
       id="customer-portal-shell"
-      className="df-portal"
+      className="df-app df-portal"
       style={{
-        display: 'flex',
         height: '100vh',
         width: '100vw',
-        backgroundColor: 'var(--portal-bg)',
-        color: 'var(--portal-text-1)',
-        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
         overflow: 'hidden',
         position: 'relative',
       }}
@@ -147,7 +143,6 @@ export default function CustomerPortalShell() {
         <CustomerSidebar
           activeView={activeView}
           onNavigate={handleNavigate}
-          collapsed={false}
         />
       </div>
 
@@ -164,6 +159,7 @@ export default function CustomerPortalShell() {
           title={selectedQuotationId ? 'Quotation Detail' : (VIEW_TITLES[activeView] || 'Customer Portal')}
           onToggleSidebar={() => setSidebarOpen(o => !o)}
           sidebarOpen={sidebarOpen}
+          isMobile={isMobile}
         />
 
         {/* Scrollable content pane */}

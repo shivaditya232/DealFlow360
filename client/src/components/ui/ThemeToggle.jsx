@@ -13,9 +13,7 @@ export default function ThemeToggle() {
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
       title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
     >
-      <span className="df-theme-toggle-thumb">
-        {isDark ? <Moon size={12} /> : <Sun size={12} />}
-      </span>
+      {isDark ? <Moon size={17} strokeWidth={1.9} /> : <Sun size={17} strokeWidth={1.9} />}
     </button>
   );
 }

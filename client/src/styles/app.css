@@ -420,35 +420,22 @@
 /* ---------- Buttons: theme toggle ---------- */
 
 .df-theme-toggle {
-  position: relative;
-  width: 52px;
-  height: 30px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface-elevated);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 3px;
-  display: flex;
-  align-items: center;
-  transition: background var(--transition-normal);
-}
-
-.df-theme-toggle-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-600), var(--accent-violet-600));
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  transition: transform var(--transition-normal);
-  transform: translateX(0);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
 }
 
-[data-theme='dark'] .df-theme-toggle-thumb {
-  transform: translateX(22px);
+.df-theme-toggle:hover {
+  color: var(--color-primary-600);
 }
 
 /* ---------- Loading / empty states ---------- */

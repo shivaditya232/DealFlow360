@@ -7,8 +7,10 @@ import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Dashboard from './pages/Dashboard';
 import Portal from './pages/Portal';
+import PortalNegotiationChatPage from './pages/portal/PortalNegotiationChatPage';
 import QuotationsList from './pages/quotations/QuotationsList';
 import QuotationDetail from './pages/quotations/QuotationDetail';
+import NegotiationChatPage from './pages/quotations/NegotiationChatPage';
 import ApprovalsList from './pages/approvals/ApprovalsList';
 import ApprovalDetail from './pages/approvals/ApprovalDetail';
 import DealHealth from './pages/dashboard/DealHealth';
@@ -66,6 +68,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/quotations" element={<QuotationsList />} />
               <Route path="/quotations/:id" element={<QuotationDetail />} />
+              <Route path="/quotations/:id/negotiation" element={<NegotiationChatPage />} />
               <Route path="/deal-health" element={<DealHealth />} />
               <Route
                 path="/approvals"
@@ -132,6 +135,21 @@ export default function App() {
                 <ProtectedRoute>
                   <RoleGuard allowCustomer={true}>
                     <Portal />
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Negotiation chat — a real standalone route/screen, deliberately
+                outside the portal's pane-switching shell so it "pops out"
+                as its own full-page conversation instead of just another
+                embedded section. */}
+            <Route
+              path="/portal/quotations/:id/negotiation"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowCustomer={true}>
+                    <PortalNegotiationChatPage />
                   </RoleGuard>
                 </ProtectedRoute>
               }

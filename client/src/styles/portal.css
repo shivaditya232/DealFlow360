@@ -90,21 +90,21 @@
 
 /* Reuse the same toggle look the internal app uses (index.css/app.css
    define .df-theme-toggle already; these are portal-local fallbacks in
-   case that file isn't loaded on this route for any reason). */
+   case that file isn't loaded on this route for any reason). Bare icon,
+   no box/border behind it — matches the internal app's toggle. */
 .df-portal .df-theme-toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  border: 1px solid var(--portal-border-strong);
-  background: var(--portal-surface);
+  border: none;
+  background: transparent;
   color: var(--portal-text-2);
   cursor: pointer;
-  justify-content: center;
-  transition: background-color 150ms ease, color 150ms ease;
+  transition: color 150ms ease;
 }
 .df-portal .df-theme-toggle:hover {
-  background: var(--portal-hover);
   color: var(--portal-text-1);
 }

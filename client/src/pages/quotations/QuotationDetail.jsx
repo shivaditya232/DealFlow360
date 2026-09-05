@@ -1,15 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Sparkles, Send, MessageSquare, Check, X as XIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Sparkles, Send, MessageSquare, ChevronRight } from 'lucide-react';
 import TopBar from '../../components/layout/TopBar';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Skeleton from '../../components/ui/Skeleton';
 import AddLineModal from './AddLineModal';
-import Input from '../../components/ui/Input';
 import quotationService from '../../services/quotation.service';
 import configService from '../../services/config.service';
-import portalService from '../../services/portal.service';
 import useQuotationSocket from '../../hooks/useQuotationSocket';
 
 const STATUS_VARIANT = {
@@ -31,14 +29,6 @@ export default function QuotationDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
-  // Rep countering a customer's pending proposal — the only response that
-  // needs input (Accept/Reject are one-click); tracks which proposal's
-  // counter form is open plus its two fields.
-  const [counterOpenFor, setCounterOpenFor] = useState(null);
-  const [counterDiscount, setCounterDiscount] = useState('');
-  const [counterMessage, setCounterMessage] = useState('');
-  const [counterSubmitting, setCounterSubmitting] = useState(false);
-
   const load = useCallback(() => {
     quotationService.detail(id).then(setQuotation).catch(() => setError('Could not load this quotation.'));
     quotationService.upsellSuggestions(id).then(setUpsell).catch(() => {});
@@ -88,39 +78,6 @@ export default function QuotationDetail() {
       setError(err.response?.data?.error || 'Could not submit for approval.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleProposalAction = async (proposalId, action, extra) => {
-    try {
-      await portalService.respondToProposal(proposalId, action, extra);
-      load();
-    } catch {
-      setError('Could not respond to that message.');
-    }
-  };
-
-  const handleCounterSubmit = async (proposalId) => {
-    const discount = counterDiscount !== '' ? Number(counterDiscount) : undefined;
-    if (discount === undefined) {
-      setError('Enter a counter discount %.');
-      return;
-    }
-    setCounterSubmitting(true);
-    setError(null);
-    try {
-      await portalService.respondToProposal(proposalId, 'COUNTER', {
-        proposedChanges: { discountPercent: discount },
-        message: counterMessage.trim() || null,
-      });
-      setCounterOpenFor(null);
-      setCounterDiscount('');
-      setCounterMessage('');
-      load();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Could not send that counter-offer.');
-    } finally {
-      setCounterSubmitting(false);
     }
   };
 
@@ -263,92 +220,29 @@ export default function QuotationDetail() {
                 </Card>
               )}
 
-              <Card>
-                <div className="df-card-header">
-                  <div>
-                    <div className="df-card-title">Negotiation Thread</div>
-                    <div className="df-card-subtitle">Messages &amp; counter-offers with the customer</div>
-                  </div>
-                  <MessageSquare size={18} className="df-text-muted" />
-                </div>
-
-                {quotation.negotiationThread.length === 0 ? (
-                  <div className="df-text-sm df-text-muted">No messages yet.</div>
-                ) : (
-                  <div className="df-thread">
-                    {quotation.negotiationThread.map((m) => (
-                      <div key={m.id}>
-                        <div className={`df-msg ${m.from === 'CUSTOMER' ? 'customer' : 'rep'}`}>
-                          {m.message && <div>{m.message}</div>}
-                          {m.proposedChanges && Object.keys(m.proposedChanges).length > 0 && (
-                            <div style={{ fontSize: 11.5, marginTop: 4, opacity: 0.9 }}>
-                              Proposed: {Object.entries(m.proposedChanges).map(([k, v]) => `${k}: ${v}`).join(', ')}
-                            </div>
-                          )}
-                          <div className="df-msg-meta">{m.fromName} · {new Date(m.createdAt).toLocaleString()}</div>
+              <Link to={`/quotations/${id}/negotiation`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Card style={{ cursor: 'pointer' }}>
+                  <div className="df-flex-between">
+                    <div className="df-row-gap-12">
+                      <MessageSquare size={18} className="df-text-muted" />
+                      <div>
+                        <div className="df-card-title">Negotiation Chat</div>
+                        <div className="df-card-subtitle">
+                          {quotation.negotiationThread.length === 0
+                            ? 'No messages yet'
+                            : `${quotation.negotiationThread.length} message${quotation.negotiationThread.length === 1 ? '' : 's'} · last from ${quotation.negotiationThread[quotation.negotiationThread.length - 1].fromName}`}
                         </div>
-                        {m.from === 'CUSTOMER' && m.status === 'PENDING' && (
-                          <>
-                            <div className="df-row-gap-8 df-mt-8">
-                              <button type="button" className="df-btn df-btn-primary df-btn-sm" onClick={() => handleProposalAction(m.id, 'ACCEPT')}>
-                                <Check size={13} /> Accept
-                              </button>
-                              <button
-                                type="button"
-                                className="df-btn df-btn-outline df-btn-sm"
-                                onClick={() => {
-                                  setCounterOpenFor((cur) => (cur === m.id ? null : m.id));
-                                  setCounterDiscount('');
-                                  setCounterMessage('');
-                                }}
-                              >
-                                <MessageSquare size={13} /> {counterOpenFor === m.id ? 'Cancel' : 'Counter'}
-                              </button>
-                              <button type="button" className="df-btn df-btn-outline df-btn-sm" onClick={() => handleProposalAction(m.id, 'REJECT')}>
-                                <XIcon size={13} /> Reject
-                              </button>
-                            </div>
-
-                            {counterOpenFor === m.id && (
-                              <div className="df-mt-8" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)' }}>
-                                <Input
-                                  label="Counter discount %"
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  step="0.5"
-                                  value={counterDiscount}
-                                  onChange={(e) => setCounterDiscount(e.target.value)}
-                                  placeholder="e.g. 12"
-                                  required
-                                />
-                                <div className="df-form-group">
-                                  <label className="df-label"><span>Message to customer</span></label>
-                                  <textarea
-                                    className="df-input"
-                                    rows={2}
-                                    value={counterMessage}
-                                    onChange={(e) => setCounterMessage(e.target.value)}
-                                    placeholder="Explain the counter-offer…"
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  className="df-btn df-btn-primary df-btn-sm"
-                                  disabled={counterSubmitting}
-                                  onClick={() => handleCounterSubmit(m.id)}
-                                >
-                                  <Send size={13} /> {counterSubmitting ? 'Sending…' : 'Send Counter-Offer'}
-                                </button>
-                              </div>
-                            )}
-                          </>
-                        )}
                       </div>
-                    ))}
+                    </div>
+                    <div className="df-row-gap-8">
+                      {quotation.negotiationThread.some((m) => m.from === 'CUSTOMER' && m.status === 'PENDING') && (
+                        <Badge variant="warning" dot>Awaiting your reply</Badge>
+                      )}
+                      <ChevronRight size={16} className="df-text-muted" />
+                    </div>
                   </div>
-                )}
-              </Card>
+                </Card>
+              </Link>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, position: 'sticky', top: 88 }}>

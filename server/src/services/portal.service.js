@@ -97,11 +97,14 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
           variant: { select: { attributeName: true, attributeValue: true } },
         },
       },
-      // Only the ONE current pending proposal — overwrite-in-place means at most one
+      // Full history for the chat view (mirrors quotation.service.js's
+      // getQuotationDetail on the internal side), oldest first.
       negotiationProposals: {
-        where: { status: "PENDING" },
-        orderBy: { updatedAt: "desc" },
-        take: 1,
+        include: {
+          proposedByUser: { select: { name: true } },
+          proposedByCustomer: { select: { name: true } },
+        },
+        orderBy: { createdAt: "asc" },
       },
     },
   });
@@ -118,8 +121,21 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
     lines.reduce((sum, l) => sum + l.lineTotal, 0) * 100
   ) / 100;
 
-  // Flatten: currentProposal is null if nothing is PENDING
-  const currentProposal = quotation.negotiationProposals[0] ?? null;
+  // Full thread for the chat view, oldest first.
+  const negotiationThread = quotation.negotiationProposals.map((p) => ({
+    id: p.id,
+    lineId: p.lineId,
+    from: p.proposedByType,
+    fromName: p.proposedByUser?.name ?? p.proposedByCustomer?.name ?? p.proposedByType,
+    message: p.message,
+    proposedChanges: p.proposedChanges,
+    status: p.status,
+    createdAt: p.createdAt,
+  }));
+
+  // Flatten: currentProposal is null if nothing is PENDING (still needed for
+  // the accept/counter/reject action logic, unaffected by the fuller thread above)
+  const currentProposal = quotation.negotiationProposals.filter((p) => p.status === "PENDING").pop() ?? null;
 
   // Activity feed — relevant AuditLog entries for this quotation, newest first.
   // Gives customers a persistent history even when they missed live WS events.
@@ -143,7 +159,8 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
 
   return {
     ...quotation,
-    negotiationProposals: undefined, // strip the array
+    negotiationProposals: undefined, // strip the raw array
+    negotiationThread,
     currentProposal,
     lines,
     orderTotal,
