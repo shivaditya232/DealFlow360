@@ -25,3 +25,14 @@ export function authorize(...allowedRoles) {
     next();
   };
 }
+
+// Usage: router.post("/x", authenticate, requireInternal, handler)
+// Blocks CUSTOMER-token requests from internal-only endpoints (quotation
+// building, approvals) without caring which internal role it is.
+export function requireInternal(req, res, next) {
+  if (!req.auth) return res.status(401).json({ error: "Not authenticated" });
+  if (req.auth.accountType !== "INTERNAL") {
+    return res.status(403).json({ error: "Forbidden: internal users only" });
+  }
+  next();
+}
