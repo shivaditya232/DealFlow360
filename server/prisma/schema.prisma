@@ -52,6 +52,10 @@ model User {
   role         UserRole
   createdAt    DateTime @default(now())
 
+  quotationsAsRep      Quotation[]           @relation("RepQuotations")
+  approvalSteps        ApprovalStep[]
+  auditLogs            AuditLog[]
+  negotiationProposals NegotiationProposal[]
   quotationsAsRep Quotation[]    @relation("RepQuotations")
   approvalSteps   ApprovalStep[]
   auditLogs       AuditLog[]
@@ -81,6 +85,10 @@ model Customer {
 
   createdAt DateTime @default(now())
 
+  quotations           Quotation[]
+  scoreEvents          ScoreEvent[]
+  payments             Payment[]
+  negotiationProposals NegotiationProposal[]
   quotations  Quotation[]
   scoreEvents ScoreEvent[]
   payments    Payment[]
@@ -256,10 +264,11 @@ model Quotation {
   confirmationDeadline DateTime? // deadline for customer to confirm terms
   promisedDeliveryDate DateTime? // promised delivery date; compared against actual fulfillment for Deal Health slippage
 
-  lines               QuotationLine[]
-  approvalSteps       ApprovalStep[]
-  negotiationRequests NegotiationRequest[]
-  scoreEvents         ScoreEvent[]
+  lines                QuotationLine[]
+  approvalSteps        ApprovalStep[]
+  negotiationRequests  NegotiationRequest[]
+  negotiationProposals NegotiationProposal[]
+  scoreEvents          ScoreEvent[]
 
   @@index([companyId, status])
   @@index([companyId, repId])
@@ -271,6 +280,25 @@ enum LineType {
 }
 
 model QuotationLine {
+  id                   String          @id @default(cuid())
+  quotationId          String
+  quotation            Quotation       @relation(fields: [quotationId], references: [id])
+  productId            String
+  product              Product         @relation(fields: [productId], references: [id])
+  variantId            String?
+  variant              ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity             Int
+  unitPrice            Decimal         @db.Decimal(12, 2)
+  discountPercent      Decimal         @db.Decimal(5, 2)
+  categoryLimitAtTime  Decimal         @db.Decimal(5, 2) // snapshot of CategoryDiscountLimit at time of line creation (audit)
+  tierLimitAtTime      Decimal         @db.Decimal(5, 2) // snapshot of DiscountTier limit at time of line creation (audit)
+  lineType             LineType        @default(ONE_TIME)
+
+  fulfillmentSplits    FulfillmentSplit[]
+  subscription         Subscription?
+  stockReservations    StockReservation[]
+  negotiationRequests  NegotiationRequest[]
+  negotiationProposals NegotiationProposal[]
   id                  String          @id @default(cuid())
   quotationId         String
   quotation           Quotation       @relation(fields: [quotationId], references: [id])
@@ -565,4 +593,60 @@ model NegotiationRequest {
   createdAt             DateTime          @default(now())
 
   @@index([quotationId])
+}
+
+// =========================================================
+// STRUCTURED NEGOTIATION PROPOSALS
+// Overwrite-in-place model: one row per quotation+term.
+// Each counter overwrites the same row; the permanent record
+// lives in AuditLog, not in a chain of proposal rows.
+// =========================================================
+
+enum ProposedByType {
+  REP
+  CUSTOMER
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model NegotiationProposal {
+  id                  String         @id @default(cuid())
+  quotationId         String
+  quotation           Quotation      @relation(fields: [quotationId], references: [id])
+
+  // null = order-level proposal (e.g. change total order discount)
+  // non-null = line-level proposal (e.g. change qty or discount on one line)
+  lineId              String?
+  line                QuotationLine? @relation(fields: [lineId], references: [id])
+
+  // Who is currently making this proposal (switches on each counter)
+  proposedByType      ProposedByType
+  proposedByUserId    String?        // set when proposedByType = REP
+  proposedByUser      User?          @relation(fields: [proposedByUserId], references: [id])
+  proposedByCustomerId String?       // set when proposedByType = CUSTOMER
+  proposedByCustomer  Customer?      @relation(fields: [proposedByCustomerId], references: [id])
+
+  // e.g. { "discountPercent": 12, "quantity": 50 }
+  // All fields in here are accepted/rejected as one atomic unit — no partial acceptance.
+  proposedChanges     Json
+
+  // Snapshot of CategoryDiscountLimit + DiscountTier values at time of proposal creation/counter.
+  // Protects against company-wide rule changes happening mid-negotiation.
+  snapshotLimits      Json
+
+  status              ProposalStatus @default(PENDING)
+
+  // Still open — recommend 48h TTL for consistency with stock reservation TTL.
+  // Set expiresAt when proposal is created/countered; a cron auto-rejects expired PENDING proposals.
+  expiresAt           DateTime?
+
+  respondedAt         DateTime?      // set when status moves to ACCEPTED or REJECTED
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([quotationId, status])
 }
