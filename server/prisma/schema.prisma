@@ -14,20 +14,21 @@ datasource db {
 model Company {
   id        String   @id @default(cuid())
   name      String
+  slug      String   @unique // url-safe identifier used to pick the company at login (multi-tenant demo)
   createdAt DateTime @default(now())
 
-  users               User[]
-  customers           Customer[]
-  products            Product[]
-  warehouses          Warehouse[]
-  discountTiers       DiscountTier[]
-  categoryLimits      CategoryDiscountLimit[]
-  approvalChainRules  ApprovalChainRule[]
-  scoreReasons        ScoreReason[]
-  quotations          Quotation[]
-  subscriptionPlans   SubscriptionPlan[]
-  upsellRules         UpsellRule[]
-  auditLogs           AuditLog[]
+  users              User[]
+  customers          Customer[]
+  products           Product[]
+  warehouses         Warehouse[]
+  discountTiers      DiscountTier[]
+  categoryLimits     CategoryDiscountLimit[]
+  approvalChainRules ApprovalChainRule[]
+  scoreReasons       ScoreReason[]
+  quotations         Quotation[]
+  subscriptionPlans  SubscriptionPlan[]
+  upsellRules        UpsellRule[]
+  auditLogs          AuditLog[]
 }
 
 // =========================================================
@@ -55,6 +56,9 @@ model User {
   approvalSteps        ApprovalStep[]
   auditLogs            AuditLog[]
   negotiationProposals NegotiationProposal[]
+  quotationsAsRep Quotation[]    @relation("RepQuotations")
+  approvalSteps   ApprovalStep[]
+  auditLogs       AuditLog[]
 
   @@unique([companyId, email])
   @@index([companyId])
@@ -67,24 +71,27 @@ enum CustomerTier {
 }
 
 model Customer {
-  id                     String       @id @default(cuid())
-  companyId              String
-  company                Company      @relation(fields: [companyId], references: [id])
-  name                   String
-  email                  String
-  tier                   CustomerTier @default(BRONZE)
-  portalPasswordHash     String?
+  id                 String       @id @default(cuid())
+  companyId          String
+  company            Company      @relation(fields: [companyId], references: [id])
+  name               String
+  email              String
+  tier               CustomerTier @default(BRONZE)
+  portalPasswordHash String?
 
   // --- Reliability score ---
-  reliabilityScore       Int          @default(100) // clamp 0-100 in application logic; starts at 100
-  consecutiveOnTimeCount Int          @default(0)   // resets to 0 on any late event
+  reliabilityScore       Int @default(100) // clamp 0-100 in application logic; starts at 100
+  consecutiveOnTimeCount Int @default(0) // resets to 0 on any late event
 
-  createdAt              DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   quotations           Quotation[]
   scoreEvents          ScoreEvent[]
   payments             Payment[]
   negotiationProposals NegotiationProposal[]
+  quotations  Quotation[]
+  scoreEvents ScoreEvent[]
+  payments    Payment[]
 
   @@unique([companyId, email])
   @@index([companyId])
@@ -100,14 +107,14 @@ model ScoreReason {
   id           String   @id @default(cuid())
   companyId    String
   company      Company  @relation(fields: [companyId], references: [id])
-  code         String   // e.g. "VERY_LATE_PAYMENT" - used by app logic to look this up
-  label        String   // human-readable, e.g. "Payment more than 10 days late"
-  defaultDelta Int      // fixed penalty/bonus, e.g. -20, -10, +3, +5
-  isPenalty    Boolean  // convenience flag for filtering/reporting
+  code         String // e.g. "VERY_LATE_PAYMENT" - used by app logic to look this up
+  label        String // human-readable, e.g. "Payment more than 10 days late"
+  defaultDelta Int // fixed penalty/bonus, e.g. -20, -10, +3, +5
+  isPenalty    Boolean // convenience flag for filtering/reporting
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 
-  scoreEvents  ScoreEvent[]
+  scoreEvents ScoreEvent[]
 
   @@unique([companyId, code])
 }
@@ -121,9 +128,9 @@ model ScoreEvent {
   companyId             String
   scoreReasonId         String
   scoreReason           ScoreReason   @relation(fields: [scoreReasonId], references: [id])
-  delta                 Int           // copied from ScoreReason.defaultDelta at time of event (snapshot)
-  scoreBefore           Int           // clamped 0-100
-  scoreAfter            Int           // clamped 0-100
+  delta                 Int // copied from ScoreReason.defaultDelta at time of event (snapshot)
+  scoreBefore           Int // clamped 0-100
+  scoreAfter            Int // clamped 0-100
   note                  String?
   // Who or what caused this score change: userId if human-triggered, or
   // "SYSTEM:<job_name>" for automated triggers (e.g. "SYSTEM:PAYMENT_CRON")
@@ -143,24 +150,24 @@ model ScoreEvent {
 // =========================================================
 
 model Product {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   companyId     String
-  company       Company  @relation(fields: [companyId], references: [id])
+  company       Company @relation(fields: [companyId], references: [id])
   name          String
   category      String
-  basePrice     Decimal  @db.Decimal(12, 2)
+  basePrice     Decimal @db.Decimal(12, 2)
   unit          String
-  taxRate       Decimal  @db.Decimal(5, 2)
+  taxRate       Decimal @db.Decimal(5, 2)
   description   String?
-  marginPercent Decimal  @db.Decimal(5, 2)
+  marginPercent Decimal @db.Decimal(5, 2)
 
   variants          ProductVariant[]
   priceListEntries  PriceListEntry[]
   quotationLines    QuotationLine[]
   stockLevels       StockLevel[]
   subscriptionPlans SubscriptionPlan[]
-  upsellAsBase      UpsellRule[] @relation("BaseProduct")
-  upsellAsSuggested UpsellRule[] @relation("SuggestedProduct")
+  upsellAsBase      UpsellRule[]       @relation("BaseProduct")
+  upsellAsSuggested UpsellRule[]       @relation("SuggestedProduct")
 
   @@index([companyId, category])
 }
@@ -169,8 +176,8 @@ model ProductVariant {
   id             String  @id @default(cuid())
   productId      String
   product        Product @relation(fields: [productId], references: [id])
-  attributeName  String  // e.g. "Size"
-  attributeValue String  // e.g. "Large"
+  attributeName  String // e.g. "Size"
+  attributeValue String // e.g. "Large"
   extraPrice     Decimal @db.Decimal(12, 2)
 
   quotationLines QuotationLine[]
@@ -212,16 +219,16 @@ model CategoryDiscountLimit {
 }
 
 model ApprovalChainRule {
-  id                  String  @id @default(cuid())
-  companyId           String
-  company             Company @relation(fields: [companyId], references: [id])
-  minDiscountPercent  Decimal @db.Decimal(5, 2)
-  maxDiscountPercent  Decimal @db.Decimal(5, 2)
-  requiresManager     Boolean @default(true)
-  requiresFinance     Boolean @default(false)
+  id                 String  @id @default(cuid())
+  companyId          String
+  company            Company @relation(fields: [companyId], references: [id])
+  minDiscountPercent Decimal @db.Decimal(5, 2)
+  maxDiscountPercent Decimal @db.Decimal(5, 2)
+  requiresManager    Boolean @default(true)
+  requiresFinance    Boolean @default(false)
   // Controls which rule fires first when multiple rules match a quotation.
   // Lower number = evaluated/applied first.
-  priority            Int     @default(0)
+  priority           Int     @default(0)
 }
 
 // =========================================================
@@ -240,21 +247,22 @@ enum QuotationStatus {
 }
 
 model Quotation {
-  id               String          @id @default(cuid())
-  companyId        String
-  company          Company         @relation(fields: [companyId], references: [id])
-  customerId       String
-  customer         Customer        @relation(fields: [customerId], references: [id])
-  repId            String
-  rep              User            @relation("RepQuotations", fields: [repId], references: [id])
-  status           QuotationStatus @default(DRAFT)
-  blendedRiskScore Decimal?        @db.Decimal(6, 2)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  lastActivityAt   DateTime        @default(now()) // updated on every meaningful action; used for stalled-deal detection
-  expiresAt        DateTime?       // quotation expiry — lapsing triggers late-cancellation score check
-  cancelledAt      DateTime?
-  confirmationDeadline DateTime?   // deadline for customer to confirm terms
+  id                   String          @id @default(cuid())
+  companyId            String
+  company              Company         @relation(fields: [companyId], references: [id])
+  customerId           String
+  customer             Customer        @relation(fields: [customerId], references: [id])
+  repId                String
+  rep                  User            @relation("RepQuotations", fields: [repId], references: [id])
+  status               QuotationStatus @default(DRAFT)
+  blendedRiskScore     Decimal?        @db.Decimal(6, 2)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  lastActivityAt       DateTime        @default(now()) // updated on every meaningful action; used for stalled-deal detection
+  expiresAt            DateTime? // quotation expiry — lapsing triggers late-cancellation score check
+  cancelledAt          DateTime?
+  confirmationDeadline DateTime? // deadline for customer to confirm terms
+  promisedDeliveryDate DateTime? // promised delivery date; compared against actual fulfillment for Deal Health slippage
 
   lines                QuotationLine[]
   approvalSteps        ApprovalStep[]
@@ -291,6 +299,24 @@ model QuotationLine {
   stockReservations    StockReservation[]
   negotiationRequests  NegotiationRequest[]
   negotiationProposals NegotiationProposal[]
+  id                  String          @id @default(cuid())
+  quotationId         String
+  quotation           Quotation       @relation(fields: [quotationId], references: [id])
+  productId           String
+  product             Product         @relation(fields: [productId], references: [id])
+  variantId           String?
+  variant             ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity            Int
+  unitPrice           Decimal         @db.Decimal(12, 2)
+  discountPercent     Decimal         @db.Decimal(5, 2)
+  categoryLimitAtTime Decimal         @db.Decimal(5, 2) // snapshot of CategoryDiscountLimit at time of line creation (audit)
+  tierLimitAtTime     Decimal         @db.Decimal(5, 2) // snapshot of DiscountTier limit at time of line creation (audit)
+  lineType            LineType        @default(ONE_TIME)
+
+  fulfillmentSplits   FulfillmentSplit[]
+  subscription        Subscription?
+  stockReservations   StockReservation[]
+  negotiationRequests NegotiationRequest[]
 }
 
 enum ApprovalStatus {
@@ -326,12 +352,12 @@ model AuditLog {
   id         String   @id @default(cuid())
   companyId  String
   company    Company  @relation(fields: [companyId], references: [id])
-  userId     String?  // null for system-generated actions
+  userId     String? // null for system-generated actions
   user       User?    @relation(fields: [userId], references: [id])
-  entityType String   // "Quotation" | "ApprovalStep" | "Subscription" | ...
+  entityType String // "Quotation" | "ApprovalStep" | "Subscription" | ...
   entityId   String
-  action     String   // "CREATED" | "APPROVED" | "REJECTED" | "CANCELLED" | ...
-  metadata   Json?    // e.g. { "oldDiscount": 10, "newDiscount": 18 }
+  action     String // "CREATED" | "APPROVED" | "REJECTED" | "CANCELLED" | ...
+  metadata   Json? // e.g. { "oldDiscount": 10, "newDiscount": 18 }
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
@@ -361,11 +387,11 @@ model UpsellRule {
 // =========================================================
 
 model Warehouse {
-  id                  String  @id @default(cuid())
-  companyId           String
-  company             Company @relation(fields: [companyId], references: [id])
-  name                String
-  shippingCostWeight  Decimal @db.Decimal(6, 2)
+  id                 String  @id @default(cuid())
+  companyId          String
+  company            Company @relation(fields: [companyId], references: [id])
+  name               String
+  shippingCostWeight Decimal @db.Decimal(6, 2)
 
   stockLevels       StockLevel[]
   fulfillmentSplits FulfillmentSplit[]
@@ -378,8 +404,8 @@ model StockLevel {
   warehouse              Warehouse @relation(fields: [warehouseId], references: [id])
   productId              String
   product                Product   @relation(fields: [productId], references: [id])
-  companyId              String    // denormalized for efficient company-scoped stock queries
-  quantityAvailable      Int       // total physical stock
+  companyId              String // denormalized for efficient company-scoped stock queries
+  quantityAvailable      Int // total physical stock
   quantityReserved       Int       @default(0) // held against open quotations
   replenishmentThreshold Int
   // Sellable stock = quantityAvailable - quantityReserved (compute in app logic)
@@ -392,9 +418,9 @@ model StockLevel {
 }
 
 enum ReservationStatus {
-  HELD       // quotation is open/pending, stock is locked
-  RELEASED   // quotation was rejected/expired/cancelled, stock given back
-  CONSUMED   // order confirmed & fulfilled, stock permanently deducted
+  HELD // quotation is open/pending, stock is locked
+  RELEASED // quotation was rejected/expired/cancelled, stock given back
+  CONSUMED // order confirmed & fulfilled, stock permanently deducted
 }
 
 // Created the moment a quotation line is added with a warehouse split.
@@ -411,7 +437,7 @@ model StockReservation {
   stockLevel       StockLevel        @relation(fields: [stockLevelId], references: [id])
   quantityReserved Int
   status           ReservationStatus @default(HELD)
-  expiresAt        DateTime?         // 48h TTL — cron auto-releases HELD reservations past this
+  expiresAt        DateTime? // 48h TTL — cron auto-releases HELD reservations past this
   releasedAt       DateTime?
   createdAt        DateTime          @default(now())
 
@@ -419,17 +445,17 @@ model StockReservation {
 }
 
 model FulfillmentSplit {
-  id                String     @id @default(cuid())
+  id                String        @id @default(cuid())
   quotationLineId   String
   quotationLine     QuotationLine @relation(fields: [quotationLineId], references: [id])
   warehouseId       String
-  warehouse         Warehouse  @relation(fields: [warehouseId], references: [id])
+  warehouse         Warehouse     @relation(fields: [warehouseId], references: [id])
   // Direct FK to StockLevel so consumption can update quantityAvailable efficiently.
   stockLevelId      String
-  stockLevel        StockLevel @relation(fields: [stockLevelId], references: [id])
+  stockLevel        StockLevel    @relation(fields: [stockLevelId], references: [id])
   quantityFulfilled Int
-  isBackorder       Boolean    @default(false)
-  fulfilledAt       DateTime?  // set when actually dispatched; null = pending/backorder
+  isBackorder       Boolean       @default(false)
+  fulfilledAt       DateTime? // set when actually dispatched; null = pending/backorder
 }
 
 // =========================================================
@@ -437,21 +463,34 @@ model FulfillmentSplit {
 // =========================================================
 
 enum BillingCycle {
+  WEEKLY
   MONTHLY
   QUARTERLY
   YEARLY
 }
 
+enum ProrationRule {
+  DAILY_RATE
+  NO_PRORATION
+  FULL_PERIOD
+}
+
+enum CancellationRefundRule {
+  NO_REFUND
+  PRORATED
+  FULL_PERIOD_REFUND
+}
+
 model SubscriptionPlan {
-  id                     String       @id @default(cuid())
+  id                     String                 @id @default(cuid())
   companyId              String
-  company                Company      @relation(fields: [companyId], references: [id])
+  company                Company                @relation(fields: [companyId], references: [id])
   productId              String
-  product                Product      @relation(fields: [productId], references: [id])
-  name                   String       // e.g. "Standard Monthly", "Annual Pro" — needed to distinguish plans for the same product
+  product                Product                @relation(fields: [productId], references: [id])
+  name                   String // e.g. "Standard Monthly", "Annual Pro" — needed to distinguish plans for the same product
   billingCycle           BillingCycle
-  prorationRule          String       // e.g. "DAILY_RATE" | "NO_PRORATION" | "FULL_PERIOD"
-  cancellationRefundRule String       // e.g. "NO_REFUND" | "PRORATED" | "FULL_PERIOD_REFUND"
+  prorationRule          ProrationRule
+  cancellationRefundRule CancellationRefundRule
 
   subscriptions Subscription[]
 }
@@ -490,7 +529,7 @@ model BillingEvent {
   type           BillingEventType
   amount         Decimal          @db.Decimal(12, 2)
   dueDate        DateTime
-  paidAt         DateTime?        // null + past dueDate = overdue; Payment is the actual record
+  paidAt         DateTime? // null + past dueDate = overdue; Payment is the actual record
 
   scoreEvents ScoreEvent[]
   payments    Payment[]
@@ -540,17 +579,18 @@ enum NegotiationStatus {
 }
 
 model NegotiationRequest {
-  id               String            @id @default(cuid())
-  quotationId      String
-  quotation        Quotation         @relation(fields: [quotationId], references: [id])
+  id                    String            @id @default(cuid())
+  quotationId           String
+  quotation             Quotation         @relation(fields: [quotationId], references: [id])
   // Proper FK to QuotationLine — enables include: { line: true } in Prisma queries
-  lineId           String?
-  line             QuotationLine?    @relation(fields: [lineId], references: [id])
-  type             NegotiationType
-  message          String?
-  proposedDiscount Decimal?          @db.Decimal(5, 2)
-  status           NegotiationStatus @default(OPEN)
-  createdAt        DateTime          @default(now())
+  lineId                String?
+  line                  QuotationLine?    @relation(fields: [lineId], references: [id])
+  type                  NegotiationType
+  message               String?
+  proposedDiscount      Decimal?          @db.Decimal(5, 2)
+  requestedDeliveryDate DateTime? // customer-requested delivery date (Portal Negotiation screen)
+  status                NegotiationStatus @default(OPEN)
+  createdAt             DateTime          @default(now())
 
   @@index([quotationId])
 }
