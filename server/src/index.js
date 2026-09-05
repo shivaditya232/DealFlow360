@@ -9,6 +9,8 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import quotationRoutes from "./routes/quotation.routes.js";
 import approvalRoutes from "./routes/approval.routes.js";
 import portalRoutes from "./routes/portal.routes.js";
+import customerRoutes from "./routes/customer.routes.js";
+import productRoutes from "./routes/product.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
@@ -24,6 +26,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/quotations", quotationRoutes);
 app.use("/api/approvals", approvalRoutes);
 app.use("/api/portal", portalRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/products", productRoutes);
 
 app.use(errorHandler);
 

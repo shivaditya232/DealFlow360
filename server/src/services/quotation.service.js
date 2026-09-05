@@ -34,11 +34,12 @@ export async function createQuotation({ companyId, repId, customerId }) {
 export async function listQuotations({ companyId, status }) {
   const quotations = await prisma.quotation.findMany({
     where: { companyId, ...(status ? { status } : {}) },
-    include: { customer: { select: { name: true } }, lines: true },
+    include: { customer: { select: { id: true, name: true } }, lines: true },
     orderBy: { updatedAt: "desc" },
   });
   return quotations.map((q) => ({
     id: q.id,
+    customerId: q.customer.id,
     customerName: q.customer.name,
     status: q.status,
     amount: Math.round(q.lines.reduce((sum, l) => sum + lineTotal(l), 0) * 100) / 100,

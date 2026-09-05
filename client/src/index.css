@@ -352,33 +352,88 @@ a:hover {
   padding: 0 1rem;
   font-family: var(--font-family);
   font-size: 0.9375rem;
-  color: #0f172a;
-  background-color: #ffffff;
-  border: 1px solid #D8DEE8;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
   border-radius: 9px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-xs);
   box-sizing: border-box;
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 .df-input::placeholder {
-  color: #94a3b8;
+  color: var(--text-disabled);
 }
 
 .df-input:hover:not(:disabled):not(:focus) {
-  border-color: #94a3b8;
+  border-color: var(--color-slate-400);
 }
 
 .df-input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus-primary);
 }
 
 .df-input:disabled {
-  background-color: #f8fafc;
-  color: #94a3b8;
+  background-color: var(--bg-app);
+  color: var(--text-disabled);
   cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Select (native <select> dressed up to match .df-input, incl. dark mode)
+   ========================================================================== */
+
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render the
+   native option popup in a matching dark palette instead of a jarring white one */
+
+.df-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  padding-right: 2.75rem; /* room for the chevron */
+  background-image: none;
+}
+
+.df-select:disabled {
+  cursor: not-allowed;
+}
+
+.df-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.df-select-chevron {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.df-select-wrapper:focus-within .df-select-chevron {
+  color: var(--border-focus);
+}
+
+.df-select:disabled ~ .df-select-chevron {
+  color: var(--text-disabled);
+}
+
+.df-select option {
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
 }
 
 .df-input-error {
@@ -1184,6 +1239,67 @@ a:hover {
   background-color: var(--color-danger-50);
   border: 1px solid var(--color-danger-200);
   color: var(--color-danger-700);
+}
+
+/* ==========================================================================
+   Offline banner & crash screen
+   ========================================================================== */
+
+.df-offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #78350f;
+  background-color: var(--color-warning-500);
+}
+
+[data-theme="dark"] .df-offline-banner {
+  color: #1c1305;
+}
+
+.df-crash-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px;
+  gap: 10px;
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.df-crash-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger-50);
+  color: var(--color-danger-600);
+  margin-bottom: 6px;
+}
+
+.df-crash-screen h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.df-crash-screen p {
+  color: var(--text-muted);
+  max-width: 360px;
+  font-size: 0.875rem;
+  margin-bottom: 8px;
 }
 
 /* ==========================================================================
