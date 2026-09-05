@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import { httpError } from "../utils/httpError.js";
 import { broadcast } from "../sockets/index.js";
+import { triggerFulfillment, triggerBilling } from "./fulfillment.service.js";
 
 // ─── List pending approvals for a rep/finance user ────────────────────────────
 
@@ -197,6 +198,14 @@ export async function actOnApproval(approverId, companyId, quotationId, { action
     confirmedBy: approverId,
     confirmedByType: "APPROVER",
   });
+
+  // Fire fulfillment + billing — fire-and-forget, errors logged but don't roll back approval
+  triggerFulfillment(companyId, quotationId).catch((e) =>
+    console.error(`[fulfillment] quotation ${quotationId}:`, e.message)
+  );
+  triggerBilling(companyId, quotationId).catch((e) =>
+    console.error(`[billing] quotation ${quotationId}:`, e.message)
+  );
 
   return { quotationId, status: "CONFIRMED" };
 }

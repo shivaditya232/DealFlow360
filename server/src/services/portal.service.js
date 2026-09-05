@@ -4,6 +4,7 @@ import { httpError } from "../utils/httpError.js";
 import { computeBlendedRiskScore, fetchCurrentLimits } from "../utils/riskCalculator.js";
 import { resolveApprovalSteps } from "../utils/approvalRouter.js";
 import { broadcast } from "../sockets/index.js";
+import { triggerFulfillment, triggerBilling } from "./fulfillment.service.js";
 
 const TTL_72H_SECONDS = 72 * 60 * 60;
 
@@ -120,6 +121,26 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
   // Flatten: currentProposal is null if nothing is PENDING
   const currentProposal = quotation.negotiationProposals[0] ?? null;
 
+  // Activity feed — relevant AuditLog entries for this quotation, newest first.
+  // Gives customers a persistent history even when they missed live WS events.
+  const auditLogs = await prisma.auditLog.findMany({
+    where: {
+      companyId,
+      OR: [
+        { entityId: quotationId },
+        { entityType: "FulfillmentSplit", metadata: { path: ["quotationId"], equals: quotationId } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  const activityFeed = auditLogs.map((log) => ({
+    action: log.action,
+    createdAt: log.createdAt,
+    note: log.metadata?.reason ?? log.metadata?.note ?? null,
+  }));
+
   return {
     ...quotation,
     negotiationProposals: undefined, // strip the array
@@ -127,6 +148,7 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
     lines,
     orderTotal,
     lineCount: lines.length,
+    activityFeed,
   };
 }
 
@@ -225,6 +247,14 @@ export async function acceptQuotation(customerId, companyId, quotationId) {
     quotationId,
     confirmedBy: customerId,
   });
+
+  // Fire fulfillment + billing
+  triggerFulfillment(companyId, quotationId).catch((e) =>
+    console.error(`[fulfillment] quotation ${quotationId}:`, e.message)
+  );
+  triggerBilling(companyId, quotationId).catch((e) =>
+    console.error(`[billing] quotation ${quotationId}:`, e.message)
+  );
 
   return { quotationId, status: "CONFIRMED" };
 }
@@ -588,6 +618,16 @@ export async function executeAcceptFlow(actorId, actorType, companyId, quotation
     acceptedBy: actorId,
     acceptedByType: actorType,
   });
+
+  // If the quotation landed on CONFIRMED, fire fulfillment + billing
+  if (updatedQuotation.status === "CONFIRMED") {
+    triggerFulfillment(companyId, quotationId).catch((e) =>
+      console.error(`[fulfillment] quotation ${quotationId}:`, e.message)
+    );
+    triggerBilling(companyId, quotationId).catch((e) =>
+      console.error(`[billing] quotation ${quotationId}:`, e.message)
+    );
+  }
 
   return {
     quotationId,
