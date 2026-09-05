@@ -70,7 +70,7 @@ function CustomerProfileMenu({ customer, onNavigate, onClose }) {
 
 function MenuAction({ icon: Icon, label, onClick, danger }) {
   const [hovered, setHovered] = useState(false);
-  const color = danger ? '#ef4444' : hovered ? 'var(--portal-text-1)' : 'var(--portal-text-2)';
+  const color = danger ? 'var(--color-danger-500)' : hovered ? 'var(--portal-text-1)' : 'var(--portal-text-2)';
 
   return (
     <button
@@ -232,13 +232,13 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
               width: '28px',
               height: '28px',
               borderRadius: '7px',
-              background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
+              background: 'linear-gradient(135deg, var(--color-primary-700), var(--color-primary-600))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '0.6875rem',
               fontWeight: '700',
-              color: '#fff',
+              color: 'var(--text-inverse)',
               letterSpacing: '0.03em',
               flexShrink: 0,
             }}>

@@ -128,6 +128,24 @@ async function main() {
         },
     });
 
+    // Bug fix: this was the ONLY configured band, so no blended risk score —
+    // however severe — could ever reach Finance; resolveApprovalSteps()
+    // (server/src/utils/approvalRouter.js) already unions requiresManager/
+    // requiresFinance across whichever rule(s) match, and already fails safe
+    // to the strictest configured rule when the score exceeds every band, but
+    // "strictest configured rule" was always just this Manager-only one.
+    // Anything past the Manager band's ceiling now also escalates to Finance.
+    await prisma.approvalChainRule.create({
+        data: {
+            companyId: company.id,
+            minDiscountPercent: new Prisma.Decimal(30.01),
+            maxDiscountPercent: new Prisma.Decimal(999.99),
+            requiresManager: true,
+            requiresFinance: true,
+            priority: 2,
+        },
+    });
+
     const latePenaltyReason = await prisma.scoreReason.create({
         data: {
             companyId: company.id,

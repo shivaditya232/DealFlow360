@@ -106,7 +106,7 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
           backgroundColor: 'rgba(239,68,68,0.08)',
           border: '1px solid rgba(239,68,68,0.22)',
           borderRadius: '9px',
-          color: '#ef4444',
+          color: 'var(--color-danger-500)',
           fontSize: '0.8125rem',
         }}>
           {error || 'Quotation not found.'}
@@ -144,7 +144,7 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
           backgroundColor: 'rgba(239,68,68,0.08)',
           border: '1px solid rgba(239,68,68,0.22)',
           borderRadius: '9px',
-          color: '#ef4444',
+          color: 'var(--color-danger-500)',
           fontSize: '0.8125rem',
         }}>
           {actionError}
@@ -208,12 +208,12 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
       {(expiresAt || confirmationDeadline) && (
         <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
           {expiresAt && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#f59e0b' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--color-warning-500)' }}>
               <Calendar size={13} /> Expires {formatDate(expiresAt)}
             </span>
           )}
           {confirmationDeadline && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: '#ef4444' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', color: 'var(--color-danger-500)' }}>
               <Calendar size={13} /> Confirm by {formatDate(confirmationDeadline)}
             </span>
           )}
@@ -235,10 +235,10 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
         </h3>
 
         {status === 'CONFIRMED' && (
-          <EmptyNotice icon={CheckCircle} color="#10b981" text="This quotation is confirmed. No further changes can be proposed." />
+          <EmptyNotice icon={CheckCircle} color="var(--color-success-500)" text="This quotation is confirmed. No further changes can be proposed." />
         )}
         {status === 'PENDING_APPROVAL' && (
-          <EmptyNotice icon={MessageSquare} color="#f59e0b" text="This quotation is awaiting internal approval before it can be negotiated." />
+          <EmptyNotice icon={MessageSquare} color="var(--color-warning-500)" text="This quotation is awaiting internal approval before it can be negotiated." />
         )}
 
         {currentProposal && (
@@ -389,7 +389,7 @@ function BackButton({ onBack }) {
 function ActionButton({ label, icon: Icon, onClick, disabled, primary, danger, type = 'button' }) {
   const border = danger ? '1px solid rgba(239,68,68,0.3)' : primary ? '1px solid var(--portal-accent-soft-border)' : '1px solid var(--portal-border-strong)';
   const bg = danger ? 'rgba(239,68,68,0.08)' : primary ? 'var(--portal-accent-soft-bg)' : 'transparent';
-  const color = danger ? '#ef4444' : primary ? 'var(--portal-accent-strong)' : 'var(--portal-text-2)';
+  const color = danger ? 'var(--color-danger-500)' : primary ? 'var(--portal-accent-strong)' : 'var(--portal-text-2)';
   return (
     <button
       type={type}

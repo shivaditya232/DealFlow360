@@ -3,7 +3,8 @@ import * as customerService from "../services/customer.service.js";
 
 export async function list(req, res, next) {
   try {
-    const customers = await customerService.listCustomers(req.auth.companyId);
+    // No longer scoped to req.auth.companyId — see customer.service.js.
+    const customers = await customerService.listCustomers();
     res.json(customers);
   } catch (err) {
     next(err);

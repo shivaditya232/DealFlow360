@@ -32,7 +32,12 @@ async function getScopedQuotation(companyId, quotationId, include = {}, { userId
 }
 
 export async function createQuotation({ companyId, repId, customerId }) {
-  const customer = await prisma.customer.findFirst({ where: { id: customerId, companyId } });
+  // Bug fix: this used to require { id: customerId, companyId }, restricting
+  // quotations to customers that belonged to the rep's own company. Reps can
+  // now sell to any customer on the platform (see customer.service.js) — the
+  // quotation itself still belongs to the rep's own company (companyId
+  // below), only the customer lookup is no longer company-scoped.
+  const customer = await prisma.customer.findFirst({ where: { id: customerId } });
   if (!customer) throw httpError(404, "Customer not found");
 
   const quotation = await prisma.quotation.create({

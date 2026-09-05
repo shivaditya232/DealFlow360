@@ -83,7 +83,10 @@ export default function NewQuotationModal({ open, onClose, onCreated }) {
                 }}
               >
                 <div style={{ fontWeight: 600, fontSize: 13.5 }}>{c.name}</div>
-                <div className="df-text-sm df-text-muted">{c.email} · {c.tier}</div>
+                <div className="df-text-sm df-text-muted">
+                  {c.email} · {c.tier}
+                  {c.company?.name && <> · <span title="Originally created under this company">{c.company.name}</span></>}
+                </div>
               </button>
             ))}
             {filtered.length === 0 && (
