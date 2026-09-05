@@ -258,9 +258,14 @@ export async function createProposal(
   const expiresAt = new Date(Date.now() + TTL_72H_SECONDS * 1000);
   const now = new Date();
 
-  // Upsert: find any existing proposal for this quotation (overwrite-in-place)
-  const existingProposal = await prisma.negotiationProposal.findFirst({
-    where: { quotationId },
+  // Overwrite-in-place applies ONLY while a proposal is still PENDING (the
+  // customer editing their own not-yet-answered request). Once a proposal
+  // has been ACCEPTED/REJECTED/EXPIRED it's history — a new proposal after
+  // that must be a NEW row, or the negotiation thread (which reads every
+  // NegotiationProposal for the quotation, see quotation.service.js) loses
+  // every past round the moment the next one starts.
+  const existingPending = await prisma.negotiationProposal.findFirst({
+    where: { quotationId, status: "PENDING" },
   });
 
   let proposal;
@@ -279,9 +284,9 @@ export async function createProposal(
     respondedAt: null,
   };
 
-  if (existingProposal) {
+  if (existingPending) {
     proposal = await prisma.negotiationProposal.update({
-      where: { id: existingProposal.id },
+      where: { id: existingPending.id },
       data: proposalData,
     });
   } else {

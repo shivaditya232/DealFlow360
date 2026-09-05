@@ -9,6 +9,7 @@ import AddLineModal from './AddLineModal';
 import quotationService from '../../services/quotation.service';
 import configService from '../../services/config.service';
 import portalService from '../../services/portal.service';
+import useQuotationSocket from '../../hooks/useQuotationSocket';
 
 const STATUS_VARIANT = {
   DRAFT: 'neutral',
@@ -37,6 +38,12 @@ export default function QuotationDetail() {
 
   useEffect(load, [load]);
   useEffect(() => { configService.getDiscountLimits().then(setDiscountLimits).catch(() => {}); }, []);
+
+  // Live updates: any broadcast for this quotation (a new/countered/accepted
+  // proposal, a status change from the approval chain, etc.) just re-fetches
+  // rather than patching state in place — several backend services can touch
+  // the same quotation and we want a single source of truth per refresh.
+  useQuotationSocket(id, () => load());
 
   const isDraft = quotation?.status === 'DRAFT';
 
