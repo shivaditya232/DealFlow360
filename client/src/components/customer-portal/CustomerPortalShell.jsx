@@ -9,21 +9,27 @@ import PortalProfileView from './PortalProfileView';
 
 /**
  * CustomerPortalShell
- * 
+ *
  * Root layout for the Customer Portal.
- * 
+ *
  * Authentication:
  *   - /portal is protected by ProtectedRoute + RoleGuard (allowCustomer=true)
  *   - accountType === 'CUSTOMER' is required (not role === 'CUSTOMER')
  *   - JWT auto-attached to all api.js calls via request interceptor
  *   - Logout clears JWT from storage (both localStorage + sessionStorage)
  *   - 401 responses auto-clear session and redirect to /login
- * 
+ *
  * View routing:
  *   Internal SPA pane switching — no extra React Router routes.
  *   The portal is one protected route: /portal
  *   Content panes are switched via `activeView` state.
- * 
+ *
+ * Theming:
+ *   The `df-portal` class scopes the CSS custom properties defined in
+ *   styles/portal.css. Those tokens flip automatically with the app-wide
+ *   [data-theme] attribute that ThemeContext sets on <html>, so this view
+ *   now supports both light and dark mode like the rest of the app.
+ *
  * Responsive:
  *   - Desktop: sidebar always visible
  *   - Tablet / mobile: sidebar collapses to a drawer via hamburger menu
@@ -82,12 +88,13 @@ export default function CustomerPortalShell() {
   return (
     <div
       id="customer-portal-shell"
+      className="df-portal"
       style={{
         display: 'flex',
         height: '100vh',
         width: '100vw',
-        backgroundColor: '#070a13',
-        color: '#f8fafc',
+        backgroundColor: 'var(--portal-bg)',
+        color: 'var(--portal-text-1)',
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
         overflow: 'hidden',
         position: 'relative',
@@ -100,7 +107,7 @@ export default function CustomerPortalShell() {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.55)',
+            backgroundColor: 'var(--portal-backdrop)',
             zIndex: 40,
             backdropFilter: 'blur(2px)',
           }}

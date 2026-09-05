@@ -3,15 +3,15 @@ import { CreditCard, AlertCircle } from 'lucide-react';
 
 /**
  * BillingSummary
- * 
+ *
  * UI architecture for billing section.
- * 
+ *
  * Backend: No billing endpoint is currently implemented.
  * Prisma models relevant when endpoint exists:
  *   BillingEvent (INVOICE | REFUND | CREDIT_NOTE | PRORATION)
  *   Payment (amount, method, paidAt, daysLate)
  *   Subscription (status, currentPeriodEnd, nextBillingDate)
- * 
+ *
  * Do NOT invent an API call here. This renders an empty/coming-soon state.
  */
 export default function BillingSummary({ data }) {
@@ -38,7 +38,7 @@ export default function BillingSummary({ data }) {
             <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#f59e0b', marginBottom: '0.2rem' }}>
               Billing portal coming soon
             </p>
-            <p style={{ fontSize: '0.75rem', color: '#92400e' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--portal-text-2)' }}>
               Invoices, payment history, and subscription management will appear here once the billing API is available.
             </p>
           </div>
@@ -51,22 +51,22 @@ export default function BillingSummary({ data }) {
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.875rem 1rem',
-            backgroundColor: '#0d1324',
-            border: '1px solid rgba(255,255,255,0.06)',
+            backgroundColor: 'var(--portal-surface)',
+            border: '1px solid var(--portal-border)',
             borderRadius: '8px',
           }}>
             <div style={{
               width: '32px',
               height: '32px',
               borderRadius: '8px',
-              backgroundColor: 'rgba(255,255,255,0.04)',
+              backgroundColor: 'var(--portal-chip-bg)',
               flexShrink: 0,
             }} />
             <div style={{ flex: 1 }}>
-              <div style={{ height: '11px', width: `${40 + i * 15}%`, borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.05)' }} />
-              <div style={{ height: '9px', width: '30%', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.03)', marginTop: '7px' }} />
+              <div style={{ height: '11px', width: `${40 + i * 15}%`, borderRadius: '4px', backgroundColor: 'var(--portal-chip-bg)' }} />
+              <div style={{ height: '9px', width: '30%', borderRadius: '4px', backgroundColor: 'var(--portal-chip-bg)', marginTop: '7px' }} />
             </div>
-            <div style={{ height: '11px', width: '60px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ height: '11px', width: '60px', borderRadius: '4px', backgroundColor: 'var(--portal-chip-bg)' }} />
           </div>
         ))}
       </div>
@@ -84,15 +84,15 @@ export default function BillingSummary({ data }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.875rem 1rem',
-          backgroundColor: 'rgba(59,130,246,0.07)',
-          border: '1px solid rgba(59,130,246,0.15)',
+          backgroundColor: 'var(--portal-accent-soft-bg)',
+          border: '1px solid var(--portal-accent-soft-border)',
           borderRadius: '9px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <CreditCard size={15} color="#3b82f6" />
-            <span style={{ fontSize: '0.8rem', color: '#93c5fd', fontWeight: '500' }}>Next billing date</span>
+            <CreditCard size={15} color="var(--portal-accent)" />
+            <span style={{ fontSize: '0.8rem', color: 'var(--portal-accent-strong)', fontWeight: '500' }}>Next billing date</span>
           </div>
-          <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#f1f5f9' }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--portal-text-1)' }}>
             {new Date(nextBillingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
         </div>
@@ -104,15 +104,15 @@ export default function BillingSummary({ data }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.875rem 1rem',
-          backgroundColor: '#0d1324',
-          border: '1px solid rgba(255,255,255,0.07)',
+          backgroundColor: 'var(--portal-surface)',
+          border: '1px solid var(--portal-border)',
           borderRadius: '8px',
         }}>
           <div>
-            <div style={{ fontSize: '0.8125rem', color: '#cbd5e1', fontWeight: '500' }}>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--portal-text-1b)', fontWeight: '500' }}>
               {invoice.type} · {new Date(invoice.dueDate).toLocaleDateString()}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.2rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--portal-text-3)', marginTop: '0.2rem' }}>
               {invoice.paidAt ? 'Paid' : 'Unpaid'}
             </div>
           </div>

@@ -13,8 +13,11 @@ import Input from '../ui/Input';
 import PasswordInput from '../ui/PasswordInput';
 import AccountTypeSelector from './AccountTypeSelector';
 import PasswordStrength from './PasswordStrength';
+import EmailOtpVerifier from './EmailOtpVerifier';
 import { useAuth } from '../../context/AuthContext';
 import { validateSignupForm, validateSignupField } from '../../validators/auth.validator';
+
+const SIMPLE_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignupForm({ onSubmitSuccess }) {
   const navigate = useNavigate();
@@ -34,6 +37,11 @@ export default function SignupForm({ onSubmitSuccess }) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitFeedback, setSubmitFeedback] = useState(null);
+  // Backend independently enforces this in auth.service.js signup() — this
+  // is just so the UI can gate the submit button and give immediate feedback.
+  const [otpStatus, setOtpStatus] = useState('idle'); // 'idle' | 'sent' | 'verified'
+
+  const emailIsValid = SIMPLE_EMAIL_RE.test(formData.email.trim());
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -132,6 +140,20 @@ export default function SignupForm({ onSubmitSuccess }) {
       return;
     }
 
+    // Email must be OTP-verified before we even attempt to create the
+    // account — mirrors the check auth.service.js makes server-side.
+    if (otpStatus !== 'verified') {
+      setSubmitFeedback({
+        type: 'error',
+        message: 'Please verify your email address with the code we send you before creating your account.',
+      });
+      const el = document.getElementById('df-input-email');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     setErrors({});
     setIsSubmitting(true);
     setSubmitFeedback(null);
@@ -152,10 +174,13 @@ export default function SignupForm({ onSubmitSuccess }) {
 
       const destination = response.landing === 'PORTAL' ? '/portal' : '/dashboard';
       const destinationName = response.landing === 'PORTAL' ? 'Customer Portal' : 'Dashboard';
+      const companyCreatedNote = response.company?.isNewCompany
+        ? ` You created the "${response.company.name}" workspace and are its Admin.`
+        : '';
 
       setSubmitFeedback({
         type: 'success',
-        message: `Account created successfully. Redirecting to ${destinationName}...`,
+        message: `Account created successfully.${companyCreatedNote} Redirecting to ${destinationName}...`,
       });
 
       if (onSubmitSuccess) {
@@ -251,7 +276,7 @@ export default function SignupForm({ onSubmitSuccess }) {
           name="companySlug"
           label="Company"
           placeholder="e.g. my-new-company"
-          helperText="Unique identifier for your company"
+          helperText="Enter your team's existing workspace ID to join it, or a new one to create your company (you'll become its Admin)."
           value={formData.companySlug}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -277,6 +302,15 @@ export default function SignupForm({ onSubmitSuccess }) {
           disabled={isSubmitting}
           autoComplete="email"
           startIcon={<Mail size={18} />}
+        />
+
+        {/* Email OTP verification — required before the account can be created */}
+        <EmailOtpVerifier
+          email={formData.email.trim()}
+          emailValid={emailIsValid}
+          status={otpStatus}
+          onStatusChange={setOtpStatus}
+          disabled={isSubmitting}
         />
 
         {/* Password with eye toggle & Strength Indicator */}

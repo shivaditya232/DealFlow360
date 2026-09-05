@@ -5,10 +5,10 @@ import BillingSummary from './BillingSummary';
 
 /**
  * PortalBilling
- * 
+ *
  * Billing section.
  * No backend billing endpoint currently exists.
- * 
+ *
  * Prisma models (for when endpoints are created):
  *   BillingEvent (INVOICE | REFUND | CREDIT_NOTE | PRORATION)
  *   Payment (amount, method, paidAt, daysLate)

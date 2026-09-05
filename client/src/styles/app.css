@@ -749,6 +749,36 @@
   margin-top: 4px;
 }
 
+/* Outline/ghost buttons (e.g. the Reject button on the Negotiation Thread)
+   pull their color from --text-primary/--border-subtle, which are supposed
+   to flip correctly in dark mode. In practice they were rendering washed
+   out to near-invisible in dark mode here, so rather than keep chasing the
+   exact cascade issue, pin explicit, always-legible colors for these
+   buttons specifically within the internal app (.df-app / AppShell) instead
+   of relying on the shared variable chain. Scoped to .df-app so this does
+   NOT affect the signup form's buttons, which have their own separate
+   always-light-mode override (index.css .df-signup-form .df-btn-outline)
+   since that page's background is hardcoded white regardless of theme. */
+[data-theme='dark'] .df-app .df-btn-outline {
+  color: #e2e8f0;
+  border-color: #475569;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme='dark'] .df-app .df-btn-outline:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.09);
+  border-color: #64748b;
+}
+
+[data-theme='dark'] .df-app .df-btn-ghost {
+  color: #cbd5e1;
+}
+
+[data-theme='dark'] .df-app .df-btn-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: #f1f5f9;
+}
+
 /* ---------- Misc utility ---------- */
 
 .df-flex-between { display: flex; align-items: center; justify-content: space-between; }

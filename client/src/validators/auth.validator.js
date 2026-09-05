@@ -5,7 +5,9 @@ import { z } from 'zod';
  * Aligned with backend constraints in server/src/validators/auth.validator.js
  */
 
-export const USER_ROLES = ['SALES_REP', 'MANAGER', 'FINANCE', 'ADMIN'];
+// Only SALES_REP is selectable via public self-signup now (Customer aside) —
+// see components/auth/AccountTypeSelector.jsx.
+export const USER_ROLES = ['SALES_REP'];
 export const ACCOUNT_TYPES = ['INTERNAL', 'CUSTOMER'];
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
