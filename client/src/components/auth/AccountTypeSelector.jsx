@@ -1,20 +1,27 @@
 import React from 'react';
-import { 
-  Briefcase, 
-  Users, 
-  Receipt, 
-  ShieldCheck, 
-  Globe, 
-  Check, 
-  AlertCircle 
+import {
+  Briefcase,
+  Globe,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 
 /**
  * Enterprise Role & Account Type Selector
- * 
- * Supports:
- * - Internal roles: Sales Rep (SALES_REP), Sales Manager (MANAGER), Finance Manager (FINANCE), Admin (ADMIN)
- * - Customer: Customer (accountType: CUSTOMER, role: null)
+ *
+ * Public self-registration only ever produces two outcomes:
+ * - Sales Rep (accountType: INTERNAL, role: SALES_REP) — joins an existing
+ *   company workspace, or creates a brand-new one if the Company field is a
+ *   slug nobody's used yet (the creator becomes that company's Admin
+ *   automatically — the backend decides this, not a role picked here).
+ * - Customer (accountType: CUSTOMER, role: null) — external portal access.
+ *
+ * Sales Manager / Finance Manager / Admin are NOT self-service roles. They
+ * used to be selectable right here, which meant anyone who knew (or guessed)
+ * a company's slug could register themselves as that company's Admin with
+ * zero authorization — see auth.service.js for the fix. Promoting a Sales
+ * Rep to Manager/Finance/Admin needs an invite flow from inside the company,
+ * which doesn't exist yet.
  */
 
 export const ROLES_CONFIG = [
@@ -24,35 +31,8 @@ export const ROLES_CONFIG = [
     role: 'SALES_REP',
     label: 'Sales Rep',
     badge: 'Internal',
-    description: 'Quotes, proposals & deal cycles',
+    description: 'Join your company workspace — or create it, if this is a brand-new company',
     icon: Briefcase,
-  },
-  {
-    key: 'MANAGER',
-    accountType: 'INTERNAL',
-    role: 'MANAGER',
-    label: 'Sales Manager',
-    badge: 'Internal',
-    description: 'Discount approvals & team pipeline',
-    icon: Users,
-  },
-  {
-    key: 'FINANCE',
-    accountType: 'INTERNAL',
-    role: 'FINANCE',
-    label: 'Finance Manager',
-    badge: 'Internal',
-    description: 'Margin thresholds, terms & billing',
-    icon: Receipt,
-  },
-  {
-    key: 'ADMIN',
-    accountType: 'INTERNAL',
-    role: 'ADMIN',
-    label: 'Admin',
-    badge: 'Internal',
-    description: 'Organization settings & user access',
-    icon: ShieldCheck,
   },
   {
     key: 'CUSTOMER',
@@ -66,7 +46,7 @@ export const ROLES_CONFIG = [
 ];
 
 export default function AccountTypeSelector({
-  value = null, // key of selected role: 'SALES_REP' | 'MANAGER' | 'FINANCE' | 'ADMIN' | 'CUSTOMER'
+  value = null, // key of selected role: 'SALES_REP' | 'CUSTOMER'
   onChange,
   onBlur,
   error = '',
@@ -109,7 +89,7 @@ export default function AccountTypeSelector({
         <div className="df-role-section">
           <div className="df-role-section-header">
             <span className="df-role-section-title">Internal Team Workspace</span>
-            <span className="df-role-section-pill">4 Roles</span>
+            <span className="df-role-section-pill">Sales Rep</span>
           </div>
 
           <div className="df-role-grid">

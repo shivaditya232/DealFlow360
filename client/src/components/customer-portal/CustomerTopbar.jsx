@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, ChevronDown, LogOut, User, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggle from '../ui/ThemeToggle';
 
 /**
  * CustomerProfileMenu
@@ -14,22 +15,22 @@ function CustomerProfileMenu({ customer, onNavigate, onClose }) {
       top: 'calc(100% + 10px)',
       right: 0,
       width: '200px',
-      backgroundColor: '#0d1324',
-      border: '1px solid rgba(255,255,255,0.09)',
+      backgroundColor: 'var(--portal-surface)',
+      border: '1px solid var(--portal-border-strong)',
       borderRadius: '10px',
-      boxShadow: '0 20px 40px -8px rgba(0,0,0,0.6)',
+      boxShadow: 'var(--portal-shadow)',
       zIndex: 1000,
       overflow: 'hidden',
     }}>
       {/* Customer info row */}
       <div style={{
         padding: '0.875rem 1rem',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--portal-border)',
       }}>
         <div style={{
           fontSize: '0.8125rem',
           fontWeight: '600',
-          color: '#f1f5f9',
+          color: 'var(--portal-text-1)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -38,7 +39,7 @@ function CustomerProfileMenu({ customer, onNavigate, onClose }) {
         </div>
         <div style={{
           fontSize: '0.75rem',
-          color: '#475569',
+          color: 'var(--portal-text-3)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -55,7 +56,7 @@ function CustomerProfileMenu({ customer, onNavigate, onClose }) {
           label="Profile"
           onClick={() => { onNavigate('profile'); onClose(); }}
         />
-        <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.05)', margin: '0.375rem 0' }} />
+        <div style={{ height: '1px', backgroundColor: 'var(--portal-border)', margin: '0.375rem 0' }} />
         <MenuAction
           icon={LogOut}
           label="Sign out"
@@ -69,7 +70,7 @@ function CustomerProfileMenu({ customer, onNavigate, onClose }) {
 
 function MenuAction({ icon: Icon, label, onClick, danger }) {
   const [hovered, setHovered] = useState(false);
-  const color = danger ? '#ef4444' : hovered ? '#f1f5f9' : '#94a3b8';
+  const color = danger ? '#ef4444' : hovered ? 'var(--portal-text-1)' : 'var(--portal-text-2)';
 
   return (
     <button
@@ -84,7 +85,7 @@ function MenuAction({ icon: Icon, label, onClick, danger }) {
         padding: '0.5rem 0.625rem',
         borderRadius: '6px',
         border: 'none',
-        backgroundColor: hovered ? (danger ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.05)') : 'transparent',
+        backgroundColor: hovered ? (danger ? 'rgba(239,68,68,0.08)' : 'var(--portal-hover)') : 'transparent',
         cursor: 'pointer',
         color,
         fontSize: '0.8125rem',
@@ -101,10 +102,11 @@ function MenuAction({ icon: Icon, label, onClick, danger }) {
 
 /**
  * CustomerTopbar
- * 
+ *
  * Renders:
  * - Hamburger toggle for sidebar (mobile/tablet)
  * - Page title
+ * - Light/dark theme toggle (shares the same ThemeContext as the rest of the app)
  * - Notification icon (placeholder — no notification endpoint yet)
  * - Customer avatar + name + dropdown (Profile / Logout)
  */
@@ -141,8 +143,8 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '0 1.25rem',
-      backgroundColor: '#080f1f',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      backgroundColor: 'var(--portal-surface-alt)',
+      borderBottom: '1px solid var(--portal-border)',
       gap: '1rem',
       flexShrink: 0,
       position: 'relative',
@@ -160,9 +162,9 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
             width: '32px',
             height: '32px',
             borderRadius: '7px',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--portal-border-strong)',
             backgroundColor: 'transparent',
-            color: '#64748b',
+            color: 'var(--portal-text-3)',
             cursor: 'pointer',
             flexShrink: 0,
           }}
@@ -173,7 +175,7 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
         <h1 style={{
           fontSize: '0.9375rem',
           fontWeight: '700',
-          color: '#f1f5f9',
+          color: 'var(--portal-text-1)',
           letterSpacing: '-0.01em',
           whiteSpace: 'nowrap',
         }}>
@@ -181,8 +183,10 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
         </h1>
       </div>
 
-      {/* Right: notification + avatar */}
+      {/* Right: theme toggle + notification + avatar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <ThemeToggle />
+
         {/* Notification bell — placeholder, no backend endpoint */}
         <button
           aria-label="Notifications"
@@ -194,9 +198,9 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
             width: '34px',
             height: '34px',
             borderRadius: '8px',
-            border: '1px solid rgba(255,255,255,0.07)',
+            border: '1px solid var(--portal-border-strong)',
             backgroundColor: 'transparent',
-            color: '#475569',
+            color: 'var(--portal-text-4)',
             cursor: 'default',
             position: 'relative',
           }}
@@ -217,8 +221,8 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
               gap: '0.5rem',
               padding: '0.3rem 0.5rem 0.3rem 0.375rem',
               borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.08)',
-              backgroundColor: menuOpen ? 'rgba(255,255,255,0.06)' : 'transparent',
+              border: '1px solid var(--portal-border-strong)',
+              backgroundColor: menuOpen ? 'var(--portal-hover)' : 'transparent',
               cursor: 'pointer',
               transition: 'background-color 150ms ease',
             }}
@@ -245,7 +249,7 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
             <span style={{
               fontSize: '0.8125rem',
               fontWeight: '600',
-              color: '#cbd5e1',
+              color: 'var(--portal-text-1b)',
               maxWidth: '120px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -256,7 +260,7 @@ export default function CustomerTopbar({ title, onToggleSidebar, sidebarOpen }) 
 
             <ChevronDown
               size={13}
-              color="#475569"
+              color="var(--portal-text-4)"
               style={{ transform: menuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease' }}
             />
           </button>

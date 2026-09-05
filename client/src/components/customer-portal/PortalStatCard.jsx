@@ -38,12 +38,12 @@ export default function PortalStatCard({
   }[status];
 
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-  const trendColor = trend === 'up' ? '#10b981' : trend === 'down' ? '#ef4444' : '#64748b';
+  const trendColor = trend === 'up' ? '#10b981' : trend === 'down' ? '#ef4444' : 'var(--portal-text-3)';
 
   return (
     <div style={{
-      backgroundColor: '#0d1324',
-      border: '1px solid rgba(255,255,255,0.07)',
+      backgroundColor: 'var(--portal-surface)',
+      border: '1px solid var(--portal-border)',
       borderRadius: '12px',
       padding: '1.25rem 1.375rem',
       display: 'flex',
@@ -102,7 +102,7 @@ export default function PortalStatCard({
         <div style={{
           height: '28px',
           borderRadius: '6px',
-          backgroundColor: 'rgba(255,255,255,0.05)',
+          backgroundColor: 'var(--portal-chip-bg)',
           width: '60%',
           animation: 'pulse 1.5s ease-in-out infinite',
         }} />
@@ -111,7 +111,7 @@ export default function PortalStatCard({
           <div style={{
             fontSize: '1.625rem',
             fontWeight: '700',
-            color: '#f1f5f9',
+            color: 'var(--portal-text-1)',
             letterSpacing: '-0.03em',
             lineHeight: '1',
             marginBottom: '0.375rem',
@@ -120,7 +120,7 @@ export default function PortalStatCard({
           </div>
           <div style={{
             fontSize: '0.8rem',
-            color: '#64748b',
+            color: 'var(--portal-text-3)',
             fontWeight: '500',
             letterSpacing: '0.01em',
           }}>
@@ -130,7 +130,7 @@ export default function PortalStatCard({
             <div style={{
               marginTop: '0.375rem',
               fontSize: '0.75rem',
-              color: '#334155',
+              color: 'var(--portal-text-5)',
             }}>
               {sub}
             </div>

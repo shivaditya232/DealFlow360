@@ -1,0 +1,110 @@
+/* ==========================================================================
+   DealFlow360 — Customer Portal theme layer
+   The portal previously hardcoded a single dark palette directly in every
+   component's inline styles, so it never responded to the app-wide
+   light/dark toggle (ThemeContext sets [data-theme] on <html>, but nothing
+   in this folder read it). These tokens fix that: every portal component
+   now reads var(--portal-*) instead of a literal hex/rgba value, and the
+   values below flip based on [data-theme='dark'] exactly like the rest of
+   the app (see index.css / app.css for the same pattern on the internal
+   Dashboard/Quotations/Approvals views).
+
+   Dark-mode values here are the ORIGINAL hardcoded colors the portal
+   already used, so dark mode looks the same as before. Light mode is new.
+   ========================================================================== */
+
+.df-portal {
+  /* Surfaces */
+  --portal-bg: #f8fafc;
+  --portal-surface: #ffffff;
+  --portal-surface-alt: #f1f5f9;
+  --portal-hover: rgba(15, 23, 42, 0.04);
+  --portal-chip-bg: rgba(15, 23, 42, 0.045);
+  --portal-backdrop: rgba(15, 23, 42, 0.45);
+  --portal-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.16);
+
+  /* Borders */
+  --portal-border: #e2e8f0;
+  --portal-border-strong: #cbd5e1;
+
+  /* Text hierarchy (1 = highest emphasis … 5 = lowest) */
+  --portal-text-1: #0f172a;
+  --portal-text-1b: #1e293b;
+  --portal-text-2: #475569;
+  --portal-text-3: #64748b;
+  --portal-text-4: #94a3b8;
+  --portal-text-5: #cbd5e1;
+
+  /* Accent (blue) */
+  --portal-accent: #2563eb;
+  --portal-accent-strong: #1d4ed8;
+  --portal-accent-soft-bg: rgba(37, 99, 235, 0.08);
+  --portal-accent-soft-bg-strong: rgba(37, 99, 235, 0.12);
+  --portal-accent-soft-bg-hover: rgba(37, 99, 235, 0.16);
+  --portal-accent-soft-border: rgba(37, 99, 235, 0.28);
+}
+
+[data-theme='dark'] .df-portal {
+  /* Surfaces */
+  --portal-bg: #070a13;
+  --portal-surface: #0d1324;
+  --portal-surface-alt: #080f1f;
+  --portal-hover: rgba(255, 255, 255, 0.05);
+  --portal-chip-bg: rgba(255, 255, 255, 0.04);
+  --portal-backdrop: rgba(0, 0, 0, 0.55);
+  --portal-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.6);
+
+  /* Borders */
+  --portal-border: rgba(255, 255, 255, 0.07);
+  --portal-border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Text hierarchy */
+  --portal-text-1: #f1f5f9;
+  --portal-text-1b: #cbd5e1;
+  --portal-text-2: #94a3b8;
+  --portal-text-3: #64748b;
+  --portal-text-4: #475569;
+  --portal-text-5: #334155;
+
+  /* Accent (blue) */
+  --portal-accent: #3b82f6;
+  --portal-accent-strong: #60a5fa;
+  --portal-accent-soft-bg: rgba(59, 130, 246, 0.1);
+  --portal-accent-soft-bg-strong: rgba(59, 130, 246, 0.14);
+  --portal-accent-soft-bg-hover: rgba(59, 130, 246, 0.18);
+  --portal-accent-soft-border: rgba(59, 130, 246, 0.3);
+}
+
+/* Scrollbar inside the portal's scrollable main pane, themed to match */
+.df-portal ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.df-portal ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.df-portal ::-webkit-scrollbar-thumb {
+  background: var(--portal-border-strong);
+  border-radius: 999px;
+}
+
+/* Reuse the same toggle look the internal app uses (index.css/app.css
+   define .df-theme-toggle already; these are portal-local fallbacks in
+   case that file isn't loaded on this route for any reason). */
+.df-portal .df-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--portal-border-strong);
+  background: var(--portal-surface);
+  color: var(--portal-text-2);
+  cursor: pointer;
+  justify-content: center;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.df-portal .df-theme-toggle:hover {
+  background: var(--portal-hover);
+  color: var(--portal-text-1);
+}

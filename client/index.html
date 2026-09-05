@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tell the browser this app manages its own light/dark theming
+         (see ThemeContext.jsx). Without this, some browsers' own "force
+         dark mode for web content" heuristic re-inverts colors on top of
+         our already-themed pages, which can break translucent/gradient UI
+         (glass cards, gradient buttons) in ways our own CSS never would. -->
+    <meta name="color-scheme" content="light dark" />
     <meta name="description" content="DealFlow360 - Intelligent, Self-Governing B2B Sales Operations and Quote-to-Cash Platform" />
     <title>DealFlow360 | Sign In</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -4,14 +4,13 @@ import QuotationStatusBadge from './QuotationStatusBadge';
 
 /**
  * QuotationPreviewCard
- * 
+ *
  * Props reflect the shape returned by the portal.service listPortalQuotations:
  *   id, status, blendedRiskScore, createdAt, updatedAt,
  *   expiresAt, confirmationDeadline, lastActivityAt,
  *   lineCount, orderTotal
- * 
- * Backend endpoint: GET /api/portal/quotations (NOT yet mounted in index.js)
- * This component is API-ready but receives no live data until the route is mounted.
+ *
+ * Backend endpoint: GET /api/portal/quotations (mounted, wired via PortalQuotations.jsx)
  */
 export default function QuotationPreviewCard({ quotation, onClick }) {
   const {
@@ -45,10 +44,10 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
       style={{
         width: '100%',
         background: 'none',
-        border: '1px solid rgba(255,255,255,0.07)',
+        border: '1px solid var(--portal-border)',
         borderRadius: '10px',
         padding: '1rem 1.25rem',
-        backgroundColor: '#0d1324',
+        backgroundColor: 'var(--portal-surface)',
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'border-color 180ms ease, background-color 180ms ease',
@@ -57,12 +56,12 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
         gap: '0.75rem',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)';
-        e.currentTarget.style.backgroundColor = 'rgba(59,130,246,0.04)';
+        e.currentTarget.style.borderColor = 'var(--portal-accent-soft-border)';
+        e.currentTarget.style.backgroundColor = 'var(--portal-accent-soft-bg)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
-        e.currentTarget.style.backgroundColor = '#0d1324';
+        e.currentTarget.style.borderColor = 'var(--portal-border)';
+        e.currentTarget.style.backgroundColor = 'var(--portal-surface)';
       }}
     >
       {/* Row 1: ID + Status */}
@@ -71,9 +70,9 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
           <span style={{
             fontFamily: 'monospace',
             fontSize: '0.75rem',
-            color: '#475569',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            color: 'var(--portal-text-3)',
+            backgroundColor: 'var(--portal-chip-bg)',
+            border: '1px solid var(--portal-border)',
             padding: '2px 6px',
             borderRadius: '5px',
           }}>
@@ -89,14 +88,14 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
           <div style={{
             fontSize: '1.25rem',
             fontWeight: '700',
-            color: '#f1f5f9',
+            color: 'var(--portal-text-1)',
             letterSpacing: '-0.025em',
           }}>
             {formattedTotal}
           </div>
           <div style={{
             fontSize: '0.75rem',
-            color: '#475569',
+            color: 'var(--portal-text-3)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.3rem',
@@ -124,7 +123,7 @@ export default function QuotationPreviewCard({ quotation, onClick }) {
           {!expiresAt && lastActivityAt && (
             <div style={{
               fontSize: '0.7375rem',
-              color: '#475569',
+              color: 'var(--portal-text-3)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.3rem',

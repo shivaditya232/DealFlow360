@@ -323,11 +323,12 @@ export async function createProposal(
     proposal = await prisma.negotiationProposal.create({ data: proposalData });
   }
 
-  // Update quotation to NEGOTIATING if not already
+  // Update quotation to NEGOTIATING if not already (was a no-op ternary that
+  // always evaluated to "NEGOTIATING" either way — simplified, same behavior)
   await prisma.quotation.update({
     where: { id: quotationId },
     data: {
-      status: quotation.status === "NEGOTIATING" ? "NEGOTIATING" : "NEGOTIATING",
+      status: "NEGOTIATING",
       lastActivityAt: now,
     },
   });
@@ -540,10 +541,15 @@ export async function executeAcceptFlow(actorId, actorType, companyId, quotation
     });
 
     // Step 3 & 4: Recompute risk + route approval (must happen AFTER line update)
+    // Bug fix: `quotation` here is the plain findUnique() above with no
+    // `include`, so `quotation.customer` was always undefined and this
+    // silently fell back to BRONZE (the strictest tier) for every accepted
+    // proposal, regardless of the customer's real tier. `proposal.quotation`
+    // was fetched WITH `customer: { select: { tier: true } }` above — use that.
     const newScore = await computeBlendedRiskScore(
       companyId,
       quotationId,
-      quotation.customer?.tier ?? "BRONZE"
+      proposal.quotation.customer?.tier ?? "BRONZE"
     );
 
     const approvalSteps = await resolveApprovalSteps(companyId, newScore);

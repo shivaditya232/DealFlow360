@@ -3,12 +3,12 @@ import { Truck, Package, Clock } from 'lucide-react';
 
 /**
  * OrderStatusCard
- * 
+ *
  * Displays order/fulfillment status. This is UI architecture only.
- * 
+ *
  * Backend: No orders/fulfillment endpoint is currently mounted.
  * When the endpoint exists, connect it here.
- * 
+ *
  * Fulfillment data would come from QuotationLine.fulfillmentSplits
  * and FulfillmentSplit.fulfilledAt / isBackorder.
  */
@@ -17,8 +17,8 @@ export default function OrderStatusCard({ order }) {
     return (
       <div style={{
         padding: '1rem 1.25rem',
-        backgroundColor: '#0d1324',
-        border: '1px solid rgba(255,255,255,0.07)',
+        backgroundColor: 'var(--portal-surface)',
+        border: '1px solid var(--portal-border)',
         borderRadius: '10px',
         display: 'flex',
         alignItems: 'center',
@@ -28,18 +28,18 @@ export default function OrderStatusCard({ order }) {
           width: '36px',
           height: '36px',
           borderRadius: '8px',
-          backgroundColor: 'rgba(59,130,246,0.10)',
+          backgroundColor: 'var(--portal-accent-soft-bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#3b82f6',
+          color: 'var(--portal-accent)',
           flexShrink: 0,
         }}>
           <Truck size={17} strokeWidth={1.75} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ height: '12px', width: '40%', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.06)' }} />
-          <div style={{ height: '10px', width: '60%', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.04)', marginTop: '8px' }} />
+          <div style={{ height: '12px', width: '40%', borderRadius: '4px', backgroundColor: 'var(--portal-chip-bg)' }} />
+          <div style={{ height: '10px', width: '60%', borderRadius: '4px', backgroundColor: 'var(--portal-chip-bg)', marginTop: '8px' }} />
         </div>
       </div>
     );
@@ -53,8 +53,8 @@ export default function OrderStatusCard({ order }) {
   return (
     <div style={{
       padding: '1rem 1.25rem',
-      backgroundColor: '#0d1324',
-      border: '1px solid rgba(255,255,255,0.07)',
+      backgroundColor: 'var(--portal-surface)',
+      border: '1px solid var(--portal-border)',
       borderRadius: '10px',
       display: 'flex',
       alignItems: 'flex-start',
@@ -79,7 +79,7 @@ export default function OrderStatusCard({ order }) {
           <span style={{
             fontFamily: 'monospace',
             fontSize: '0.75rem',
-            color: '#475569',
+            color: 'var(--portal-text-3)',
           }}>
             #{quotationId?.slice(-8)?.toUpperCase()}
           </span>
@@ -92,12 +92,12 @@ export default function OrderStatusCard({ order }) {
           </span>
         </div>
         {items != null && (
-          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.375rem' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--portal-text-3)', marginTop: '0.375rem' }}>
             {items} item{items !== 1 ? 's' : ''}
           </div>
         )}
         {fulfilledAt && (
-          <div style={{ fontSize: '0.75rem', color: '#334155', marginTop: '0.25rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--portal-text-5)', marginTop: '0.25rem' }}>
             Delivered {new Date(fulfilledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </div>
         )}

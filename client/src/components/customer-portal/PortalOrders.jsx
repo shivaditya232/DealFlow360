@@ -5,10 +5,10 @@ import PortalEmptyState from './PortalEmptyState';
 
 /**
  * PortalOrders
- * 
+ *
  * UI architecture for order/fulfillment tracking.
  * No backend endpoint currently exists for this.
- * 
+ *
  * When an orders endpoint is created, this view should be wired to it.
  * Fulfillment data in Prisma:
  *   FulfillmentSplit (quotationLineId, warehouseId, quantityFulfilled, isBackorder, fulfilledAt)
@@ -22,8 +22,8 @@ export default function PortalOrders() {
         subtitle="Track delivery status and fulfillment history for your confirmed orders."
       />
       <div style={{
-        backgroundColor: '#0d1324',
-        border: '1px solid rgba(255,255,255,0.07)',
+        backgroundColor: 'var(--portal-surface)',
+        border: '1px solid var(--portal-border)',
         borderRadius: '12px',
         overflow: 'hidden',
       }}>

@@ -15,6 +15,12 @@ const MAX_VERIFY_ATTEMPTS = 5;        // Max 5 wrong guesses before OTP is burne
 const otpKey = (email) => `otp:${email}`;
 const attemptKey = (email) => `otp:attempts:${email}`;
 const requestRlKey = (email) => `otp:request-rl:${email}`;
+const verifiedKey = (email) => `otp:email-verified:${email}`;
+
+// How long a verified-email flag survives after a successful /otp/verify,
+// before signup has to consume it. Long enough to fill out the rest of the
+// signup form, short enough that a verified flag can't be replayed much later.
+const EMAIL_VERIFIED_TTL_SECONDS = 15 * 60; // 15 minutes
 
 // ── OTP generation ────────────────────────────────────────────────────────────
 
@@ -63,9 +69,27 @@ export async function requestOtp(email) {
   await redis.del(attemptKey(email));
 
   // ── 4. Send the OTP to the user ─────────────────────────────────────────────
-  await sendOtpEmail(email, otp);
+  // Dev/demo fallback: if Gmail SMTP isn't configured right (wrong/missing
+  // app password, account policy blocking it, etc.), don't let that block
+  // signup entirely — log the OTP to the server console instead, so local
+  // testing and demos can keep moving while SMTP gets sorted out separately.
+  // Once SMTP_USER/SMTP_PASS actually work, real email just starts being used
+  // again automatically — no code change needed.
+  let emailSent = true;
+  try {
+    await sendOtpEmail(email, otp);
+  } catch (err) {
+    emailSent = false;
+    console.warn(
+      `[otp] Email delivery failed for ${email} — falling back to console.
+` +
+        `[otp] Reason: ${err.message}
+` +
+        `[otp] >>> OTP for ${email}: ${otp} <<<`
+    );
+  }
 
-  return { message: "OTP sent", expiresInSeconds: OTP_TTL_SECONDS };
+  return { message: "OTP sent", expiresInSeconds: OTP_TTL_SECONDS, emailSent };
 }
 
 /**
@@ -118,7 +142,34 @@ export async function verifyOtp(email, submittedOtp) {
   await redis.del(otpKey(email));
   await redis.del(aKey);
 
+  // Flag this email as verified so signup() can check + consume it — this is
+  // what actually links "OTP verified" to "account created with this email".
+  // Without this flag, verifying the OTP proved nothing to the signup call.
+  await redis.set(verifiedKey(email), "1", "EX", EMAIL_VERIFIED_TTL_SECONDS);
+
   return { verified: true };
+}
+
+/**
+ * Checks whether this email currently has a live "verified" flag (i.e. the
+ * OTP was verified within the last EMAIL_VERIFIED_TTL_SECONDS and hasn't
+ * been consumed by a signup yet).
+ *
+ * @param {string} email
+ * @returns {Promise<boolean>}
+ */
+export async function isEmailVerified(email) {
+  return Boolean(await redis.get(verifiedKey(email)));
+}
+
+/**
+ * Deletes the verified flag — call this once signup has actually used it,
+ * so the same OTP verification can't be replayed to create a second account.
+ *
+ * @param {string} email
+ */
+export async function consumeEmailVerification(email) {
+  await redis.del(verifiedKey(email));
 }
 
 // ── Email sender ──────────────────────────────────────────────────────────────

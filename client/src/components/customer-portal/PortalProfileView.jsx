@@ -1,44 +1,49 @@
-import React from 'react';
-import { User, Mail, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { User, Mail, Award, TrendingUp, TrendingDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import portalService from '../../services/portal.service';
 import PortalSectionHeader from './PortalSectionHeader';
 
 /**
  * PortalProfile
- * 
+ *
  * Customer profile view.
- * 
- * Currently shows data available from the authenticated session only:
- *   - customer.name  (from AuthContext / login response)
- *   - customer.email (from AuthContext / login response)
- * 
- * Extended profile data (tier, reliabilityScore, lastScoreChange) comes from:
- *   GET /api/portal/profile
- * 
- * That endpoint EXISTS in portal.controller.js / portal.service.js
- * but is NOT mounted in server/src/index.js yet.
- * 
- * When mounted, fetch here and display those fields.
- * Do NOT invent or hardcode them now.
+ *
+ * Backend: GET /api/portal/profile (portal.routes.js — mounted).
+ * Profile shape:
+ *   { name, email, tier, reliabilityScore, lastScoreChange: { delta, reason, createdAt } | null }
+ *
+ * Falls back to the session's own customer.name/email (from login) while the
+ * request is in flight or if it fails, so the page never looks broken.
  */
 export default function PortalProfile() {
   const { customer } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // ── API integration point ──────────────────────────────────────────────────
-  // When GET /api/portal/profile is mounted:
-  //
-  //   const [profile, setProfile] = useState(null);
-  //   const [loading, setLoading] = useState(true);
-  //
-  //   useEffect(() => {
-  //     api.get('/portal/profile')
-  //       .then(r => setProfile(r.data))
-  //       .finally(() => setLoading(false));
-  //   }, []);
-  //
-  // Profile shape:
-  //   { name, email, tier, reliabilityScore, lastScoreChange: { delta, reason, createdAt } | null }
-  // ──────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    portalService.getProfile()
+      .then((data) => {
+        if (!cancelled) {
+          setProfile(data);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.response?.data?.error || err.friendlyMessage || 'Failed to load extended profile details.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const displayName = profile?.name || customer?.name;
+  const displayEmail = profile?.email || customer?.email;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '600px' }}>
@@ -49,15 +54,15 @@ export default function PortalProfile() {
 
       {/* Profile card */}
       <div style={{
-        backgroundColor: '#0d1324',
-        border: '1px solid rgba(255,255,255,0.07)',
+        backgroundColor: 'var(--portal-surface)',
+        border: '1px solid var(--portal-border)',
         borderRadius: '12px',
         overflow: 'hidden',
       }}>
         {/* Avatar header */}
         <div style={{
           padding: '1.75rem',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--portal-border)',
           display: 'flex',
           alignItems: 'center',
           gap: '1rem',
@@ -76,16 +81,16 @@ export default function PortalProfile() {
             flexShrink: 0,
             letterSpacing: '0.03em',
           }}>
-            {customer?.name
-              ? customer.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            {displayName
+              ? displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
               : '?'}
           </div>
           <div>
-            <div style={{ fontSize: '1.0625rem', fontWeight: '700', color: '#f1f5f9', letterSpacing: '-0.01em' }}>
-              {customer?.name || '—'}
+            <div style={{ fontSize: '1.0625rem', fontWeight: '700', color: 'var(--portal-text-1)', letterSpacing: '-0.01em' }}>
+              {displayName || '—'}
             </div>
-            <div style={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.2rem' }}>
-              Customer Account
+            <div style={{ fontSize: '0.8125rem', color: 'var(--portal-text-3)', marginTop: '0.2rem' }}>
+              {profile?.tier ? `${tierLabel(profile.tier)} Customer` : 'Customer Account'}
             </div>
           </div>
         </div>
@@ -95,42 +100,68 @@ export default function PortalProfile() {
           <ProfileField
             icon={User}
             label="Full Name"
-            value={customer?.name}
+            value={displayName}
           />
           <ProfileField
             icon={Mail}
             label="Email Address"
-            value={customer?.email}
+            value={displayEmail}
           />
+          {!loading && profile?.reliabilityScore != null && (
+            <ProfileField
+              icon={Award}
+              label="Reliability Score"
+              value={String(profile.reliabilityScore)}
+            />
+          )}
         </div>
       </div>
 
-      {/* Extended profile notice */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '0.625rem',
-        padding: '0.875rem 1rem',
-        backgroundColor: 'rgba(59,130,246,0.07)',
-        border: '1px solid rgba(59,130,246,0.15)',
-        borderRadius: '9px',
-      }}>
-        <AlertCircle size={14} color="#3b82f6" style={{ flexShrink: 0, marginTop: '1px' }} />
-        <div>
-          <p style={{ fontSize: '0.8rem', fontWeight: '600', color: '#60a5fa', marginBottom: '0.2rem' }}>
-            Extended profile coming soon
-          </p>
-          <p style={{ fontSize: '0.75rem', color: '#334155', lineHeight: '1.6' }}>
-            Account tier, reliability score, and score history will appear here once{' '}
-            <code style={{ fontFamily: 'monospace', fontSize: '0.7375rem', backgroundColor: 'rgba(255,255,255,0.07)', padding: '1px 4px', borderRadius: '4px' }}>
-              GET /api/portal/profile
-            </code>{' '}
-            is mounted in the server.
-          </p>
+      {/* Reliability score history */}
+      {!loading && profile?.lastScoreChange && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.75rem',
+          padding: '1rem 1.25rem',
+          backgroundColor: 'var(--portal-surface)',
+          border: '1px solid var(--portal-border)',
+          borderRadius: '10px',
+        }}>
+          {profile.lastScoreChange.delta >= 0
+            ? <TrendingUp size={16} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
+            : <TrendingDown size={16} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />}
+          <div>
+            <p style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--portal-text-1b)' }}>
+              {profile.lastScoreChange.delta >= 0 ? '+' : ''}{profile.lastScoreChange.delta} points — {profile.lastScoreChange.reason}
+            </p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--portal-text-4)', marginTop: '0.2rem' }}>
+              {new Date(profile.lastScoreChange.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {error && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.625rem',
+          padding: '0.875rem 1rem',
+          backgroundColor: 'rgba(239,68,68,0.08)',
+          border: '1px solid rgba(239,68,68,0.22)',
+          borderRadius: '9px',
+        }}>
+          <p style={{ fontSize: '0.8rem', color: '#ef4444', lineHeight: '1.5' }}>{error}</p>
+        </div>
+      )}
     </div>
   );
+}
+
+function tierLabel(tier) {
+  if (!tier) return null;
+  return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
 function ProfileField({ icon: Icon, label, value }) {
@@ -140,26 +171,26 @@ function ProfileField({ icon: Icon, label, value }) {
       alignItems: 'center',
       gap: '0.875rem',
       padding: '0.875rem 0',
-      borderBottom: '1px solid rgba(255,255,255,0.04)',
+      borderBottom: '1px solid var(--portal-border)',
     }}>
       <div style={{
         width: '32px',
         height: '32px',
         borderRadius: '8px',
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: 'var(--portal-chip-bg)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#475569',
+        color: 'var(--portal-text-4)',
         flexShrink: 0,
       }}>
         <Icon size={14} strokeWidth={1.75} />
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.75rem', color: '#475569', marginBottom: '0.25rem', fontWeight: '500' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--portal-text-4)', marginBottom: '0.25rem', fontWeight: '500' }}>
           {label}
         </div>
-        <div style={{ fontSize: '0.875rem', color: value ? '#f1f5f9' : '#334155', fontWeight: '500' }}>
+        <div style={{ fontSize: '0.875rem', color: value ? 'var(--portal-text-1)' : 'var(--portal-text-5)', fontWeight: '500' }}>
           {value || '—'}
         </div>
       </div>

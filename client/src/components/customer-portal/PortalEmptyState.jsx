@@ -26,12 +26,12 @@ export default function PortalEmptyState({
         width: '52px',
         height: '52px',
         borderRadius: '12px',
-        backgroundColor: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        backgroundColor: 'var(--portal-chip-bg)',
+        border: '1px solid var(--portal-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#475569',
+        color: 'var(--portal-text-3)',
       }}>
         <Icon size={22} strokeWidth={1.5} />
       </div>
@@ -39,14 +39,14 @@ export default function PortalEmptyState({
         <p style={{
           fontSize: '0.9375rem',
           fontWeight: '600',
-          color: '#94a3b8',
+          color: 'var(--portal-text-2)',
           marginBottom: '0.375rem',
         }}>
           {title}
         </p>
         <p style={{
           fontSize: '0.8125rem',
-          color: '#475569',
+          color: 'var(--portal-text-3)',
           maxWidth: '280px',
           lineHeight: '1.6',
         }}>

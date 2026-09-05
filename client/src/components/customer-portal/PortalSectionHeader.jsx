@@ -18,7 +18,7 @@ export default function PortalSectionHeader({ title, subtitle, badge, action }) 
           <h2 style={{
             fontSize: '0.9375rem',
             fontWeight: '700',
-            color: '#f1f5f9',
+            color: 'var(--portal-text-1)',
             letterSpacing: '-0.01em',
           }}>
             {title}
@@ -32,8 +32,8 @@ export default function PortalSectionHeader({ title, subtitle, badge, action }) 
               height: '20px',
               padding: '0 6px',
               borderRadius: '9999px',
-              backgroundColor: 'rgba(59,130,246,0.15)',
-              color: '#60a5fa',
+              backgroundColor: 'var(--portal-accent-soft-bg-strong)',
+              color: 'var(--portal-accent-strong)',
               fontSize: '0.6875rem',
               fontWeight: '700',
               letterSpacing: '0.02em',
@@ -46,7 +46,7 @@ export default function PortalSectionHeader({ title, subtitle, badge, action }) 
           <p style={{
             marginTop: '0.25rem',
             fontSize: '0.8125rem',
-            color: '#475569',
+            color: 'var(--portal-text-3)',
             lineHeight: '1.5',
           }}>
             {subtitle}

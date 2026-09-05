@@ -4,6 +4,7 @@ import App from './App';
 import ErrorBoundary from './components/system/ErrorBoundary';
 import './index.css';
 import './styles/app.css';
+import './styles/portal.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

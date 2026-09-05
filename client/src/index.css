@@ -3,6 +3,12 @@
    ========================================================================== */
 
 :root {
+  /* Declared again here for anything that reads it off the CSSOM, but the
+     <meta name="color-scheme"> tag in index.html is what actually stops the
+     browser's own forced-dark heuristic from double-processing our themed
+     pages — see that file for why. */
+  color-scheme: light dark;
+
   /* Color Palette - Neutral / Slate */
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
@@ -2067,6 +2073,69 @@ html[data-theme="dark"] { color-scheme: dark; } /* lets the OS/browser render th
   color: #ef4444;
   font-weight: 500;
   line-height: 1.35;
+}
+
+/* Email OTP Verifier (signup) */
+.df-otp-verifier {
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.df-otp-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.df-otp-code-input {
+  width: 8.5rem;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* The signup panel background is always hardcoded white (see
+   .df-signup-form-panel) regardless of [data-theme="dark"] — but Button's
+   outline/ghost variants color their text from --text-primary/--text-secondary,
+   which DO flip to near-white in dark mode. Every other element on this form
+   (labels, inputs) was hardcoded to stay dark-on-white for this reason; these
+   two buttons weren't, so in dark mode "Send verification code" / "Resend
+   code" rendered as near-invisible white-on-white text. */
+.df-signup-form .df-btn-outline {
+  color: #0f172a;
+  border-color: #d8dee8;
+  background-color: #ffffff;
+}
+
+.df-signup-form .df-btn-outline:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.df-signup-form .df-btn-ghost {
+  color: #475569;
+}
+
+.df-signup-form .df-btn-ghost:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.df-otp-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-success-700);
+  background-color: var(--color-success-50);
+  border: 1px solid var(--color-success-500);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
+  width: fit-content;
 }
 
 /* Password Strength Meter */

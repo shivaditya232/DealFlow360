@@ -11,14 +11,14 @@ import {
 
 /**
  * CustomerSidebar
- * 
+ *
  * Navigation items:
  *   Overview   → /portal (active view switch only, no separate route needed at this stage)
- *   Quotations → backend: GET /api/portal/quotations (NOT YET MOUNTED)
+ *   Quotations → backend: GET /api/portal/quotations (mounted, wired)
  *   Orders     → backend: no endpoint yet
  *   Billing    → backend: no endpoint yet
- *   Profile    → backend: GET /api/portal/profile (NOT YET MOUNTED)
- * 
+ *   Profile    → backend: GET /api/portal/profile (mounted, wired)
+ *
  * Navigation is handled via `activeView` prop + `onNavigate` callback
  * so the portal can swap content panes without extra routes.
  */
@@ -49,19 +49,19 @@ function NavItem({ item, isActive, onClick }) {
         cursor: available ? 'pointer' : 'default',
         textAlign: 'left',
         transition: 'all 150ms ease',
-        backgroundColor: isActive ? 'rgba(59,130,246,0.14)' : 'transparent',
-        color: isActive ? '#60a5fa' : available ? '#94a3b8' : '#334155',
+        backgroundColor: isActive ? 'var(--portal-accent-soft-bg-strong)' : 'transparent',
+        color: isActive ? 'var(--portal-accent-strong)' : available ? 'var(--portal-text-2)' : 'var(--portal-text-5)',
       }}
       onMouseEnter={e => {
         if (!isActive && available) {
-          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
-          e.currentTarget.style.color = '#cbd5e1';
+          e.currentTarget.style.backgroundColor = 'var(--portal-hover)';
+          e.currentTarget.style.color = 'var(--portal-text-1b)';
         }
       }}
       onMouseLeave={e => {
         if (!isActive) {
           e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = available ? '#94a3b8' : '#334155';
+          e.currentTarget.style.color = available ? 'var(--portal-text-2)' : 'var(--portal-text-5)';
         }
       }}
     >
@@ -79,9 +79,9 @@ function NavItem({ item, isActive, onClick }) {
         <span style={{
           fontSize: '0.625rem',
           fontWeight: '600',
-          color: '#334155',
-          backgroundColor: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          color: 'var(--portal-text-5)',
+          backgroundColor: 'var(--portal-chip-bg)',
+          border: '1px solid var(--portal-border)',
           padding: '1px 5px',
           borderRadius: '4px',
           letterSpacing: '0.05em',
@@ -99,8 +99,8 @@ export default function CustomerSidebar({ activeView, onNavigate, collapsed = fa
     <aside style={{
       width: collapsed ? '0' : '220px',
       minWidth: collapsed ? '0' : '220px',
-      backgroundColor: '#080f1f',
-      borderRight: '1px solid rgba(255,255,255,0.06)',
+      backgroundColor: 'var(--portal-surface-alt)',
+      borderRight: '1px solid var(--portal-border)',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
@@ -109,7 +109,7 @@ export default function CustomerSidebar({ activeView, onNavigate, collapsed = fa
       {/* Brand Header */}
       <div style={{
         padding: '1.375rem 1.125rem 1rem',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '1px solid var(--portal-border)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{
@@ -128,14 +128,14 @@ export default function CustomerSidebar({ activeView, onNavigate, collapsed = fa
             <div style={{
               fontSize: '0.8rem',
               fontWeight: '800',
-              color: '#f1f5f9',
+              color: 'var(--portal-text-1)',
               letterSpacing: '-0.01em',
             }}>
-              DealFlow<span style={{ color: '#3b82f6' }}>360</span>
+              DealFlow<span style={{ color: 'var(--portal-accent)' }}>360</span>
             </div>
             <div style={{
               fontSize: '0.6rem',
-              color: '#334155',
+              color: 'var(--portal-text-5)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               fontWeight: '600',
@@ -158,7 +158,7 @@ export default function CustomerSidebar({ activeView, onNavigate, collapsed = fa
         <div style={{
           fontSize: '0.625rem',
           fontWeight: '700',
-          color: '#334155',
+          color: 'var(--portal-text-5)',
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
           padding: '0 0.875rem',
@@ -180,11 +180,11 @@ export default function CustomerSidebar({ activeView, onNavigate, collapsed = fa
       {/* Footer */}
       <div style={{
         padding: '0.875rem 1rem',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
+        borderTop: '1px solid var(--portal-border)',
       }}>
         <div style={{
           fontSize: '0.6875rem',
-          color: '#1e293b',
+          color: 'var(--portal-text-5)',
           textAlign: 'center',
         }}>
           DealFlow360 · Customer Portal

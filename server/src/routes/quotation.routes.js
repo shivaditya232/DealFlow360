@@ -8,7 +8,7 @@ router.use(authenticate);
 
 router.post("/", requireInternal, quotationController.create);
 router.get("/", requireInternal, quotationController.list);
-router.get("/:id", quotationController.detail); // customer portal will also read its own quotation here later
+router.get("/:id", requireInternal, quotationController.detail); // internal-only: customers use the separately-scoped /api/portal/quotations/:id instead
 router.post("/:id/lines", requireInternal, quotationController.addLine);
 router.patch("/:id/lines/:lineId", requireInternal, quotationController.updateLine);
 router.delete("/:id/lines/:lineId", requireInternal, quotationController.deleteLine);
