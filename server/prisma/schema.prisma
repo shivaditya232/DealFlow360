@@ -286,6 +286,14 @@ model QuotationLine {
   categoryLimitAtTime Decimal         @db.Decimal(5, 2) // snapshot of CategoryDiscountLimit at time of line creation (audit)
   tierLimitAtTime     Decimal         @db.Decimal(5, 2) // snapshot of DiscountTier limit at time of line creation (audit)
   lineType            LineType        @default(ONE_TIME)
+  // Only set when lineType is RECURRING — the rep's choice of billing cycle
+  // for this specific subscription line. Exactly one of the two is set:
+  // billingCycle for Weekly/Monthly/Quarterly/Yearly, customTenureMonths for
+  // a specific contract length in months (e.g. "9 months"). Both null means
+  // an older RECURRING line created before this field existed — fulfillment
+  // falls back to the product's first configured SubscriptionPlan for those.
+  billingCycle        BillingCycle?
+  customTenureMonths  Int?
 
   fulfillmentSplits    FulfillmentSplit[]
   subscription         Subscription?
