@@ -5,6 +5,7 @@ import { computeBlendedRiskScore, fetchCurrentLimits } from "../utils/riskCalcul
 import { resolveApprovalSteps } from "../utils/approvalRouter.js";
 import { broadcast } from "../sockets/index.js";
 import { triggerFulfillment, triggerBilling, applyProration } from "./fulfillment.service.js";
+import { computeLineTotal, roundMoney } from "../utils/pricing.util.js";
 
 const TTL_72H_SECONDS = 72 * 60 * 60;
 
@@ -64,6 +65,7 @@ export async function listPortalQuotations(customerId, companyId, statusFilter) 
           unitPrice: true,
           quantity: true,
           discountPercent: true,
+          product: { select: { taxRate: true } },
         },
       },
     },
@@ -71,14 +73,13 @@ export async function listPortalQuotations(customerId, companyId, statusFilter) 
 
   return quotations.map(({ lines, ...q }) => {
     const orderTotal = lines.reduce(
-      (sum, l) =>
-        sum + Number(l.unitPrice) * l.quantity * (1 - Number(l.discountPercent) / 100),
+      (sum, l) => sum + computeLineTotal({ ...l, taxRate: l.product.taxRate }),
       0
     );
     return {
       ...q,
       lineCount: lines.length,
-      orderTotal: Math.round(orderTotal * 100) / 100,
+      orderTotal: roundMoney(orderTotal),
     };
   });
 }
@@ -93,7 +94,7 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
     include: {
       lines: {
         include: {
-          product: { select: { name: true, category: true, unit: true } },
+          product: { select: { name: true, category: true, unit: true, taxRate: true } },
           variant: { select: { attributeName: true, attributeValue: true } },
         },
       },
@@ -114,12 +115,10 @@ export async function getPortalQuotation(customerId, companyId, quotationId) {
   // Compute line totals in application logic (not stored on the row)
   const lines = quotation.lines.map((l) => ({
     ...l,
-    lineTotal: Number(l.unitPrice) * l.quantity * (1 - Number(l.discountPercent) / 100),
+    lineTotal: computeLineTotal({ ...l, taxRate: l.product.taxRate }),
   }));
 
-  const orderTotal = Math.round(
-    lines.reduce((sum, l) => sum + l.lineTotal, 0) * 100
-  ) / 100;
+  const orderTotal = roundMoney(lines.reduce((sum, l) => sum + l.lineTotal, 0));
 
   // Full thread for the chat view, oldest first.
   const negotiationThread = quotation.negotiationProposals.map((p) => ({
@@ -822,7 +821,7 @@ export async function getCustomerBilling(customerId, companyId) {
       plan: true,
       quotationLine: {
         include: {
-          product: { select: { name: true, category: true } },
+          product: { select: { name: true, category: true, taxRate: true } },
           quotation: { select: { id: true, status: true } },
         },
       },
@@ -873,7 +872,12 @@ export async function getCustomerBilling(customerId, companyId) {
         status: sub.status,
         currentPeriodEnd: sub.currentPeriodEnd,
         nextBillingDate: sub.nextBillingDate,
-        amount: Number(sub.quotationLine.unitPrice) * sub.quotationLine.quantity * (1 - Number(sub.quotationLine.discountPercent) / 100),
+        amount: computeLineTotal({
+          quantity: sub.quotationLine.quantity,
+          unitPrice: sub.quotationLine.unitPrice,
+          discountPercent: sub.quotationLine.discountPercent,
+          taxRate: sub.quotationLine.product.taxRate,
+        }),
         events: sub.billingEvents.map((ev) => ({
           id: ev.id,
           type: ev.type,

@@ -5,10 +5,18 @@ import { httpError } from "../utils/httpError.js";
 // Shared with the friend's Approval module — one formula, used everywhere.
 import { computeBlendedRiskScore } from "../utils/riskCalculator.js";
 import { resolveApprovalSteps } from "../utils/approvalRouter.js";
+import { computeLineTotal } from "../utils/pricing.util.js";
 
 function lineTotal(line) {
-  const gross = Number(line.quantity) * Number(line.unitPrice);
-  return gross * (1 - Number(line.discountPercent) / 100);
+  // taxRate lives on the product, not the line — callers must include/select
+  // product.taxRate on whatever `line` they pass in here (see the two call
+  // sites below).
+  return computeLineTotal({
+    quantity: line.quantity,
+    unitPrice: line.unitPrice,
+    discountPercent: line.discountPercent,
+    taxRate: line.product?.taxRate ?? 0,
+  });
 }
 
 // Bug fix: this used to scope by companyId ALONE, so any authenticated
@@ -57,7 +65,10 @@ export async function listQuotations({ companyId, status, userId, role }) {
       ...(status ? { status } : {}),
       ...(role === "SALES_REP" ? { repId: userId } : {}),
     },
-    include: { customer: { select: { id: true, name: true } }, lines: true },
+    include: {
+      customer: { select: { id: true, name: true } },
+      lines: { include: { product: { select: { taxRate: true } } } },
+    },
     orderBy: { updatedAt: "desc" },
   });
   return quotations.map((q) => ({

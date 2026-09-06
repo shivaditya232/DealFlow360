@@ -42,7 +42,7 @@ export async function listPendingApprovals(approverId, companyId, role) {
           },
           rep: { select: { id: true, name: true } },
           lines: {
-            include: { product: { select: { name: true, category: true } } },
+            include: { product: { select: { name: true, category: true, taxRate: true } } },
           },
         },
       },

@@ -2,6 +2,7 @@ import prisma from "../config/prisma.js";
 import { logAction } from "./audit.service.js";
 import { broadcast } from "../sockets/index.js";
 import { checkAndMarkFulfilled } from "./stock.service.js";
+import { computeLineTotal } from "../utils/pricing.util.js";
 
 // ── Billing cycle helpers ──────────────────────────────────────────────────────
 
@@ -226,10 +227,12 @@ export async function triggerBilling(companyId, quotationId) {
   const dueDate14d = addDays(now, 14);
 
   for (const line of lines) {
-    const lineTotal =
-      Number(line.quantity) *
-      Number(line.unitPrice) *
-      (1 - Number(line.discountPercent) / 100);
+    const lineTotal = computeLineTotal({
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+      discountPercent: line.discountPercent,
+      taxRate: line.product.taxRate,
+    });
 
     // Skip if a subscription already exists for this line (idempotency guard)
     const existingSub = await prisma.subscription.findUnique({
@@ -398,6 +401,7 @@ export async function applyProration(subscriptionId, oldQuantity, newQuantity, c
       plan: true,
       quotationLine: {
         include: {
+          product: { select: { taxRate: true } },
           quotation: { select: { id: true, companyId: true } },
         },
       },
@@ -414,7 +418,8 @@ export async function applyProration(subscriptionId, oldQuantity, newQuantity, c
 
   const unitPrice = Number(subscription.quotationLine.unitPrice);
   const discountPercent = Number(subscription.quotationLine.discountPercent);
-  const effectiveUnitPrice = unitPrice * (1 - discountPercent / 100);
+  const taxRate = Number(subscription.quotationLine.product.taxRate);
+  const effectiveUnitPrice = unitPrice * (1 - discountPercent / 100) * (1 + taxRate / 100);
   const qtyDelta = numNewQty - numOldQty;
 
   const runLogic = async (currentTx) => {
@@ -516,6 +521,7 @@ export async function applyCancellationRefund(subscriptionId, cancelDate = new D
       plan: true,
       quotationLine: {
         include: {
+          product: { select: { taxRate: true } },
           quotation: { select: { id: true, companyId: true } },
         },
       },
@@ -532,7 +538,8 @@ export async function applyCancellationRefund(subscriptionId, cancelDate = new D
 
   const unitPrice = Number(subscription.quotationLine.unitPrice);
   const discountPercent = Number(subscription.quotationLine.discountPercent);
-  const effectiveUnitPrice = unitPrice * (1 - discountPercent / 100);
+  const taxRate = Number(subscription.quotationLine.product.taxRate);
+  const effectiveUnitPrice = unitPrice * (1 - discountPercent / 100) * (1 + taxRate / 100);
   const quantity = Number(subscription.quotationLine.quantity);
   const fullPeriodAmount = Math.round(quantity * effectiveUnitPrice * 100) / 100;
 

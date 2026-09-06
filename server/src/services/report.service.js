@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import PDFDocument from "pdfkit";
 import ExcelJS from "exceljs";
+import { computeLineTotal, roundMoney } from "../utils/pricing.util.js";
 
 // ── Data query ────────────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ async function fetchReportData(companyId, role, userId, filters) {
       rep: { select: { id: true, name: true } },
       lines: {
         include: {
-          product: { select: { id: true, name: true, category: true } },
+          product: { select: { id: true, name: true, category: true, taxRate: true } },
         },
         // Apply productId / category filter at the line level
         ...(productId || category
@@ -57,9 +58,7 @@ async function fetchReportData(companyId, role, userId, filters) {
 
   return filtered.map((q) => {
     const orderTotal = q.lines.reduce(
-      (sum, l) =>
-        sum +
-        Number(l.quantity) * Number(l.unitPrice) * (1 - Number(l.discountPercent) / 100),
+      (sum, l) => sum + computeLineTotal({ ...l, taxRate: l.product.taxRate }),
       0
     );
     return {
@@ -69,7 +68,7 @@ async function fetchReportData(companyId, role, userId, filters) {
       customerTier: q.customer.tier,
       repName: q.rep.name,
       createdAt: q.createdAt,
-      orderTotal: Math.round(orderTotal * 100) / 100,
+      orderTotal: roundMoney(orderTotal),
       lineCount: q.lines.length,
       lines: q.lines.map((l) => ({
         productName: l.product.name,
@@ -78,13 +77,7 @@ async function fetchReportData(companyId, role, userId, filters) {
         unitPrice: Number(l.unitPrice),
         discountPercent: Number(l.discountPercent),
         lineType: l.lineType,
-        lineTotal:
-          Math.round(
-            Number(l.quantity) *
-              Number(l.unitPrice) *
-              (1 - Number(l.discountPercent) / 100) *
-              100
-          ) / 100,
+        lineTotal: roundMoney(computeLineTotal({ ...l, taxRate: l.product.taxRate })),
       })),
     };
   });
