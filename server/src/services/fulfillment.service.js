@@ -319,3 +319,250 @@ export async function triggerBilling(companyId, quotationId) {
     }
   }
 }
+
+// ── Subscription Proration & Cancellation Refunds ───────────────────────────
+
+/**
+ * Applies proration adjustments when an ACTIVE Subscription's quantity changes mid-cycle.
+ * Called from executeAcceptFlow() in portal.service.js when an accepted proposal updates
+ * quantity on a QuotationLine.
+ *
+ * @param {string} subscriptionId
+ * @param {number} oldQuantity
+ * @param {number} newQuantity
+ * @param {Date} [changeDate=new Date()]
+ * @param {object} [tx=null] Optional existing Prisma transaction client
+ */
+export async function applyProration(subscriptionId, oldQuantity, newQuantity, changeDate = new Date(), tx = null) {
+  const client = tx || prisma;
+  const numOldQty = Number(oldQuantity);
+  const numNewQty = Number(newQuantity);
+
+  if (numOldQty === numNewQty) return null;
+
+  const subscription = await client.subscription.findUnique({
+    where: { id: subscriptionId },
+    include: {
+      plan: true,
+      quotationLine: {
+        include: {
+          quotation: { select: { id: true, companyId: true } },
+        },
+      },
+    },
+  });
+
+  if (!subscription || subscription.status !== "ACTIVE") {
+    return null;
+  }
+
+  const companyId = subscription.plan.companyId || subscription.quotationLine.quotation.companyId;
+  const plan = subscription.plan;
+  const rule = plan.prorationRule;
+
+  const unitPrice = Number(subscription.quotationLine.unitPrice);
+  const discountPercent = Number(subscription.quotationLine.discountPercent);
+  const effectiveUnitPrice = unitPrice * (1 - discountPercent / 100);
+  const qtyDelta = numNewQty - numOldQty;
+
+  const runLogic = async (currentTx) => {
+    if (rule === "NO_PRORATION") {
+      // NO_PRORATION: No immediate adjustment; new quantity applies starting next billing cycle.
+      await currentTx.auditLog.create({
+        data: {
+          companyId,
+          userId: null,
+          entityType: "Subscription",
+          entityId: subscriptionId,
+          action: "PRORATION_SKIPPED",
+          metadata: {
+            rule: "NO_PRORATION",
+            reason: "Adjustment deferred to next natural billing cycle per plan rule",
+            subscriptionId,
+            oldQuantity: numOldQty,
+            newQuantity: numNewQty,
+          },
+        },
+      });
+      return { rule: "NO_PRORATION", amount: 0, billingEvent: null };
+    }
+
+    let prorationAmount = 0;
+    let daysRemaining = null;
+    let totalDaysInPeriod = null;
+
+    if (rule === "FULL_PERIOD") {
+      // FULL_PERIOD: Billed as if applied for the entire current period
+      prorationAmount = Math.round(qtyDelta * effectiveUnitPrice * 100) / 100;
+    } else if (rule === "DAILY_RATE") {
+      // DAILY_RATE: Prorated based on days remaining in the current billing period
+      totalDaysInPeriod = BILLING_CYCLE_DAYS[plan.billingCycle] ?? 30;
+      const diffMs = new Date(subscription.currentPeriodEnd).getTime() - new Date(changeDate).getTime();
+      daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      const dailyRate = effectiveUnitPrice / totalDaysInPeriod;
+      prorationAmount = Math.round(dailyRate * qtyDelta * daysRemaining * 100) / 100;
+    }
+
+    if (prorationAmount === 0) {
+      return { rule, amount: 0, billingEvent: null };
+    }
+
+    const billingEvent = await currentTx.billingEvent.create({
+      data: {
+        subscriptionId,
+        type: "PRORATION",
+        amount: prorationAmount,
+        dueDate: changeDate,
+      },
+    });
+
+    await currentTx.auditLog.create({
+      data: {
+        companyId,
+        userId: null,
+        entityType: "BillingEvent",
+        entityId: billingEvent.id,
+        action: "PRORATION_CREATED",
+        metadata: {
+          subscriptionId,
+          rule,
+          oldQuantity: numOldQty,
+          newQuantity: numNewQty,
+          qtyDelta,
+          daysRemaining,
+          totalDaysInPeriod,
+          amount: prorationAmount,
+          dueDate: changeDate,
+        },
+      },
+    });
+
+    return { rule, amount: prorationAmount, daysRemaining, billingEvent };
+  };
+
+  if (tx) {
+    return runLogic(tx);
+  } else {
+    return prisma.$transaction(async (newTx) => runLogic(newTx));
+  }
+}
+
+/**
+ * Handles cancellation proration/refund when a Subscription moves to CANCELLED mid-cycle.
+ * Applies SubscriptionPlan.cancellationRefundRule (NO_REFUND, PRORATED, FULL_PERIOD_REFUND).
+ *
+ * @param {string} subscriptionId
+ * @param {Date} [cancelDate=new Date()]
+ * @param {object} [tx=null] Optional existing Prisma transaction client
+ */
+export async function applyCancellationRefund(subscriptionId, cancelDate = new Date(), tx = null) {
+  const client = tx || prisma;
+
+  const subscription = await client.subscription.findUnique({
+    where: { id: subscriptionId },
+    include: {
+      plan: true,
+      quotationLine: {
+        include: {
+          quotation: { select: { id: true, companyId: true } },
+        },
+      },
+    },
+  });
+
+  if (!subscription || subscription.status === "CANCELLED") {
+    return null;
+  }
+
+  const companyId = subscription.plan.companyId || subscription.quotationLine.quotation.companyId;
+  const plan = subscription.plan;
+  const rule = plan.cancellationRefundRule;
+
+  const unitPrice = Number(subscription.quotationLine.unitPrice);
+  const discountPercent = Number(subscription.quotationLine.discountPercent);
+  const effectiveUnitPrice = unitPrice * (1 - discountPercent / 100);
+  const quantity = Number(subscription.quotationLine.quantity);
+  const fullPeriodAmount = Math.round(quantity * effectiveUnitPrice * 100) / 100;
+
+  const runLogic = async (currentTx) => {
+    // 1. Mark subscription CANCELLED
+    await currentTx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: cancelDate,
+      },
+    });
+
+    let refundAmount = 0;
+    let daysRemaining = null;
+    let totalDaysInPeriod = null;
+
+    if (rule === "FULL_PERIOD_REFUND") {
+      refundAmount = fullPeriodAmount;
+    } else if (rule === "PRORATED") {
+      totalDaysInPeriod = BILLING_CYCLE_DAYS[plan.billingCycle] ?? 30;
+      const diffMs = new Date(subscription.currentPeriodEnd).getTime() - new Date(cancelDate).getTime();
+      daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      const dailyRate = effectiveUnitPrice / totalDaysInPeriod;
+      refundAmount = Math.round(dailyRate * quantity * daysRemaining * 100) / 100;
+    }
+    // NO_REFUND leaves refundAmount = 0
+
+    let billingEvent = null;
+    if (refundAmount > 0) {
+      billingEvent = await currentTx.billingEvent.create({
+        data: {
+          subscriptionId,
+          type: "REFUND",
+          amount: refundAmount,
+          dueDate: cancelDate,
+        },
+      });
+
+      await currentTx.auditLog.create({
+        data: {
+          companyId,
+          userId: null,
+          entityType: "BillingEvent",
+          entityId: billingEvent.id,
+          action: "REFUND_CREATED",
+          metadata: {
+            subscriptionId,
+            rule,
+            quantity,
+            refundAmount,
+            daysRemaining,
+            totalDaysInPeriod,
+            dueDate: cancelDate,
+          },
+        },
+      });
+    }
+
+    await currentTx.auditLog.create({
+      data: {
+        companyId,
+        userId: null,
+        entityType: "Subscription",
+        entityId: subscriptionId,
+        action: "SUBSCRIPTION_CANCELLED",
+        metadata: {
+          subscriptionId,
+          rule,
+          refundAmount,
+          cancelDate,
+        },
+      },
+    });
+
+    return { subscriptionId, status: "CANCELLED", rule, refundAmount, billingEvent };
+  };
+
+  if (tx) {
+    return runLogic(tx);
+  } else {
+    return prisma.$transaction(async (newTx) => runLogic(newTx));
+  }
+}
+

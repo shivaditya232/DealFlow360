@@ -4,7 +4,7 @@ import { httpError } from "../utils/httpError.js";
 import { computeBlendedRiskScore, fetchCurrentLimits } from "../utils/riskCalculator.js";
 import { resolveApprovalSteps } from "../utils/approvalRouter.js";
 import { broadcast } from "../sockets/index.js";
-import { triggerFulfillment, triggerBilling } from "./fulfillment.service.js";
+import { triggerFulfillment, triggerBilling, applyProration } from "./fulfillment.service.js";
 
 const TTL_72H_SECONDS = 72 * 60 * 60;
 
@@ -618,6 +618,20 @@ export async function executeAcceptFlow(actorId, actorType, companyId, quotation
       if (changes.discountPercent !== undefined) lineUpdate.discountPercent = changes.discountPercent;
       if (changes.quantity !== undefined) lineUpdate.quantity = changes.quantity;
       await tx.quotationLine.update({ where: { id: proposal.lineId }, data: lineUpdate });
+
+      // Apply proration if line is tied to an ACTIVE subscription and quantity changed
+      if (
+        changes.quantity !== undefined &&
+        oldValues.quantity !== undefined &&
+        Number(changes.quantity) !== Number(oldValues.quantity)
+      ) {
+        const activeSub = await tx.subscription.findFirst({
+          where: { quotationLineId: proposal.lineId, status: "ACTIVE" },
+        });
+        if (activeSub) {
+          await applyProration(activeSub.id, oldValues.quantity, changes.quantity, now, tx);
+        }
+      }
     } else if (!proposal.lineId && changes.discountPercent !== undefined) {
       // Order-level: apply the negotiated discount to every line on this quotation.
       await tx.quotationLine.updateMany({
