@@ -27,7 +27,12 @@ function assertQuotationNegotiable(quotation) {
 // ─── Portal: view quotations ───────────────────────────────────────────────────
 
 // Portal-visible statuses — what a customer can actually see
-const PORTAL_VISIBLE_STATUSES = ["APPROVED", "NEGOTIATING", "CONFIRMED", "PENDING_APPROVAL"];
+// Bug fix: FULFILLED was missing here, so the instant a quotation finished
+// shipping/backorder-resolution it VANISHED from the customer's Quotations
+// list entirely (filtered out server-side) instead of showing as Fulfilled —
+// looked to the customer like it was stuck on whatever status it had last,
+// since there was nowhere left to see the new one.
+const PORTAL_VISIBLE_STATUSES = ["APPROVED", "NEGOTIATING", "CONFIRMED", "PENDING_APPROVAL", "FULFILLED"];
 
 /**
  * Lists all quotations visible to a customer on the portal.

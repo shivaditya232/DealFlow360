@@ -7,6 +7,7 @@ import Skeleton from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import NewQuotationModal from './NewQuotationModal';
 import quotationService from '../../services/quotation.service';
+import { getSocket } from '../../lib/socket';
 
 const COLUMNS = [
   { key: 'DRAFT', label: 'Draft', color: 'var(--chart-track)' },
@@ -14,6 +15,12 @@ const COLUMNS = [
   { key: 'APPROVED', label: 'Approved', color: 'var(--chart-series-3)' },
   { key: 'NEGOTIATING', label: 'Negotiating', color: 'var(--chart-series-2)' },
   { key: 'CONFIRMED', label: 'Confirmed', color: 'var(--chart-series-1)' },
+  // Bug fix: this column didn't exist before, so the moment a quotation
+  // actually finished fulfillment it fell out of every Kanban bucket (the
+  // status still got tracked in `byColumn`, just under a key nothing ever
+  // rendered) — it looked like fulfilled orders vanished, or that a
+  // quotation could never leave "Confirmed".
+  { key: 'FULFILLED', label: 'Fulfilled', color: 'var(--color-success-500)' },
 ];
 
 export default function QuotationsList() {
@@ -30,6 +37,25 @@ export default function QuotationsList() {
   };
 
   useEffect(load, []);
+
+  // Live refresh — without this, a quotation that changes status elsewhere
+  // (e.g. an admin resolving its last backorder) stays stuck showing its old
+  // status here until the page is manually reloaded.
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+    const ids = (quotations || []).map((q) => q.id).filter(Boolean);
+    const joinAll = () => { for (const id of ids) socket.emit('join', { quotationId: id }); };
+    const handleUpdate = () => load();
+    socket.on('connect', joinAll);
+    socket.on('quotation:update', handleUpdate);
+    if (socket.connected) joinAll();
+    return () => {
+      for (const id of ids) socket.emit('leave', { quotationId: id });
+      socket.off('connect', joinAll);
+      socket.off('quotation:update', handleUpdate);
+    };
+  }, [quotations]);
 
   const visible = useMemo(
     () => (statusFilter ? (quotations || []).filter((q) => q.status === statusFilter) : quotations),

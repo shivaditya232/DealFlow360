@@ -172,12 +172,19 @@ async function fulfillLine(companyId, quotationId, line) {
       });
 
       if (!split.isBackorder) {
-        // Decrement both quantityAvailable and quantityReserved
+        // Bug fix: this used to also decrement quantityReserved here, but
+        // nothing anywhere in the app ever increments it first — there's no
+        // "hold stock while a quotation is being negotiated" step actually
+        // wired up (StockReservation rows are never created, only consumed
+        // below). Decrementing a counter that was never incremented drove it
+        // negative on every single confirmed order, which is why "Reserved
+        // Qty" in the Warehouses admin view kept showing negative numbers
+        // that a restock never fixed. Only quantityAvailable — the real
+        // physical stock count — should move here.
         await tx.stockLevel.update({
           where: { id: split.stockLevelId },
           data: {
             quantityAvailable: { decrement: split.qty },
-            quantityReserved: { decrement: split.qty },
           },
         });
       }

@@ -4,6 +4,7 @@ import portalService from '../../services/portal.service';
 import PortalSectionHeader from './PortalSectionHeader';
 import PortalEmptyState from './PortalEmptyState';
 import QuotationPreviewCard from './QuotationPreviewCard';
+import { getSocket } from '../../lib/socket';
 
 /**
  * PortalQuotations
@@ -27,6 +28,12 @@ const STATUS_TABS = [
   { label: 'Negotiating',      value: 'NEGOTIATING' },
   { label: 'Pending Approval', value: 'PENDING_APPROVAL' },
   { label: 'Confirmed',        value: 'CONFIRMED' },
+  // Bug fix: FULFILLED wasn't a portal-visible status at all before (see
+  // PORTAL_VISIBLE_STATUSES in server/src/services/portal.service.js), so a
+  // quotation that finished shipping just disappeared from every tab here,
+  // "All" included — this tab, and that server-side fix, are what bring it
+  // back into view once it's actually fulfilled.
+  { label: 'Fulfilled',        value: 'FULFILLED' },
 ];
 
 function StatusTabs({ activeStatus, onChange }) {
@@ -79,6 +86,24 @@ export default function PortalQuotations({ onOpenQuotation }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Live refresh — a status change elsewhere (rep confirms, backorder
+  // resolves) used to only show up here after a manual reload.
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+    const ids = quotations.map((q) => q.id).filter(Boolean);
+    const joinAll = () => { for (const id of ids) socket.emit('join', { quotationId: id }); };
+    const handleUpdate = () => load();
+    socket.on('connect', joinAll);
+    socket.on('quotation:update', handleUpdate);
+    if (socket.connected) joinAll();
+    return () => {
+      for (const id of ids) socket.emit('leave', { quotationId: id });
+      socket.off('connect', joinAll);
+      socket.off('quotation:update', handleUpdate);
+    };
+  }, [quotations]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>

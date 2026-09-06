@@ -4,6 +4,7 @@ import portalService from '../../services/portal.service';
 import PortalSectionHeader from './PortalSectionHeader';
 import PortalEmptyState from './PortalEmptyState';
 import Badge from '../ui/Badge';
+import { getSocket } from '../../lib/socket';
 
 export default function PortalOrders() {
   const [orders, setOrders] = useState([]);
@@ -26,6 +27,25 @@ export default function PortalOrders() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  // Live refresh — a backorder resolving (admin restocks) or a fresh
+  // confirm creating new splits used to only show up here after a manual
+  // reload, since this page never subscribed to anything.
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+    const ids = [...new Set(orders.map((o) => o.quotationId).filter(Boolean))];
+    const joinAll = () => { for (const id of ids) socket.emit('join', { quotationId: id }); };
+    const handleUpdate = () => loadOrders();
+    socket.on('connect', joinAll);
+    socket.on('quotation:update', handleUpdate);
+    if (socket.connected) joinAll();
+    return () => {
+      for (const id of ids) socket.emit('leave', { quotationId: id });
+      socket.off('connect', joinAll);
+      socket.off('quotation:update', handleUpdate);
+    };
+  }, [orders]);
 
   const shippedCount = orders.filter((o) => !o.isBackorder).length;
   const backorderCount = orders.filter((o) => o.isBackorder).length;
