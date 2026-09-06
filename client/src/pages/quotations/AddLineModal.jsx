@@ -13,6 +13,11 @@ export default function AddLineModal({ open, onClose, quotationId, customerTier,
   const [quantity, setQuantity] = useState(1);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [lineType, setLineType] = useState('ONE_TIME');
+  // Subscription-specific: exactly one of these two drives billing once the
+  // line ships — a fixed cycle, or a custom contract length in months.
+  const [billingCycle, setBillingCycle] = useState('MONTHLY');
+  const [useCustomTenure, setUseCustomTenure] = useState(false);
+  const [customTenureMonths, setCustomTenureMonths] = useState(12);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -22,6 +27,10 @@ export default function AddLineModal({ open, onClose, quotationId, customerTier,
     setVariantId('');
     setQuantity(1);
     setDiscountPercent(0);
+    setLineType('ONE_TIME');
+    setBillingCycle('MONTHLY');
+    setUseCustomTenure(false);
+    setCustomTenureMonths(12);
     setError(null);
     productService.list().then(setProducts).catch(() => setError('Could not load products.'));
   }, [open]);
@@ -46,6 +55,10 @@ export default function AddLineModal({ open, onClose, quotationId, customerTier,
       setError('Pick a product and a valid quantity.');
       return;
     }
+    if (lineType === 'RECURRING' && useCustomTenure && (!customTenureMonths || customTenureMonths < 1)) {
+      setError('Enter a valid tenure in months.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -55,6 +68,11 @@ export default function AddLineModal({ open, onClose, quotationId, customerTier,
         quantity: Number(quantity),
         discountPercent: Number(discountPercent),
         lineType,
+        ...(lineType === 'RECURRING'
+          ? useCustomTenure
+            ? { customTenureMonths: Number(customTenureMonths) }
+            : { billingCycle }
+          : {}),
       });
       onAdded();
     } catch (err) {
@@ -102,6 +120,41 @@ export default function AddLineModal({ open, onClose, quotationId, customerTier,
         <option value="ONE_TIME">One-time</option>
         <option value="RECURRING">Recurring (subscription)</option>
       </Select>
+
+      {lineType === 'RECURRING' && (
+        <>
+          <Select
+            label="Billing"
+            value={useCustomTenure ? 'CUSTOM' : billingCycle}
+            onChange={(e) => {
+              if (e.target.value === 'CUSTOM') {
+                setUseCustomTenure(true);
+              } else {
+                setUseCustomTenure(false);
+                setBillingCycle(e.target.value);
+              }
+            }}
+          >
+            <option value="WEEKLY">Weekly</option>
+            <option value="MONTHLY">Monthly</option>
+            <option value="QUARTERLY">Quarterly</option>
+            <option value="YEARLY">Yearly</option>
+            <option value="CUSTOM">Specific tenure…</option>
+          </Select>
+
+          {useCustomTenure && (
+            <Input
+              label="Tenure (months)"
+              type="number"
+              min={1}
+              max={120}
+              value={customTenureMonths}
+              onChange={(e) => setCustomTenureMonths(e.target.value)}
+              helperText="Contract length in months — e.g. 9 for a 9-month term"
+            />
+          )}
+        </>
+      )}
 
       <Button variant="primary" fullWidth loading={submitting} onClick={submit} className="df-mt-8">
         Add to Quotation

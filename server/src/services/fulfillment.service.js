@@ -203,9 +203,12 @@ export async function triggerBilling(companyId, quotationId) {
     include: {
       product: {
         include: {
+          // Not limited to take: 1 anymore — a RECURRING line now carries its
+          // own billingCycle/customTenureMonths choice (set at Add Product
+          // time), so we need every plan on the product to find or create
+          // the one matching that specific cycle, not just the first one.
           subscriptionPlans: {
             where: { companyId },
-            take: 1,
           },
         },
       },
@@ -273,8 +276,51 @@ export async function triggerBilling(companyId, quotationId) {
         metadata: { quotationId, lineId: line.id, lineType: "ONE_TIME", amount: lineTotal },
       });
     } else {
-      // RECURRING — use the product's SubscriptionPlan
-      const plan = line.product.subscriptionPlans[0];
+      // RECURRING — resolve the SubscriptionPlan from the billing cycle /
+      // custom tenure the rep chose for THIS line (AddLineModal), not just
+      // whichever plan happened to be configured first for the product.
+      // Older lines created before that field existed have neither set —
+      // fall back to the previous behavior (product's first plan) so
+      // quotations already in flight keep working.
+      let plan = null;
+      let cycleDays = 30;
+
+      if (line.customTenureMonths) {
+        cycleDays = line.customTenureMonths * 30;
+        const planName = `Custom (${line.customTenureMonths} mo)`;
+        plan = line.product.subscriptionPlans.find((p) => p.name === planName);
+        if (!plan) {
+          plan = await prisma.subscriptionPlan.create({
+            data: {
+              companyId,
+              productId: line.productId,
+              name: planName,
+              billingCycle: "MONTHLY", // nearest fit for display only — cycleDays above is what actually drives billing
+              prorationRule: "DAILY_RATE",
+              cancellationRefundRule: "PRORATED",
+            },
+          });
+        }
+      } else if (line.billingCycle) {
+        plan = line.product.subscriptionPlans.find((p) => p.billingCycle === line.billingCycle);
+        if (!plan) {
+          plan = await prisma.subscriptionPlan.create({
+            data: {
+              companyId,
+              productId: line.productId,
+              name: `${line.product.name} — ${line.billingCycle}`,
+              billingCycle: line.billingCycle,
+              prorationRule: "DAILY_RATE",
+              cancellationRefundRule: "PRORATED",
+            },
+          });
+        }
+        cycleDays = BILLING_CYCLE_DAYS[plan.billingCycle] ?? 30;
+      } else {
+        plan = line.product.subscriptionPlans[0];
+        if (plan) cycleDays = BILLING_CYCLE_DAYS[plan.billingCycle] ?? 30;
+      }
+
       if (!plan) {
         // No plan configured — skip with a warning log
         await logAction({
@@ -287,7 +333,6 @@ export async function triggerBilling(companyId, quotationId) {
         continue;
       }
 
-      const cycleDays = BILLING_CYCLE_DAYS[plan.billingCycle] ?? 30;
       const periodEnd = addDays(now, cycleDays);
 
       const sub = await prisma.subscription.create({

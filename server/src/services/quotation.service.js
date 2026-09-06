@@ -153,7 +153,7 @@ async function priceLine({ companyId, customerTier, productId, variantId, quanti
   };
 }
 
-export async function addLine({ companyId, quotationId, productId, variantId, quantity, discountPercent, lineType, userId, role }) {
+export async function addLine({ companyId, quotationId, productId, variantId, quantity, discountPercent, lineType, billingCycle, customTenureMonths, userId, role }) {
   const quotation = await getScopedQuotation(companyId, quotationId, { customer: true }, { userId, role });
   if (quotation.status !== "DRAFT") throw httpError(409, "Only draft quotations can be edited");
 
@@ -176,6 +176,10 @@ export async function addLine({ companyId, quotationId, productId, variantId, qu
       categoryLimitAtTime,
       tierLimitAtTime,
       lineType,
+      // Only meaningful for RECURRING — the validator already guarantees
+      // exactly one of the two is set in that case.
+      billingCycle: lineType === "RECURRING" ? billingCycle ?? null : null,
+      customTenureMonths: lineType === "RECURRING" ? customTenureMonths ?? null : null,
     },
   });
   await prisma.quotation.update({ where: { id: quotationId }, data: { lastActivityAt: new Date() } });
