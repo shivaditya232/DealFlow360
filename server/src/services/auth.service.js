@@ -154,6 +154,69 @@ export async function createTeamMember(companyId, { name, email, password, role 
   return { user: { id: user.id, name: user.name, email: user.email, role: user.role } };
 }
 
+// Admin-only — edit a teammate's name/role in place. Was previously
+// write-once at creation (no way to promote/demote a role, or fix a typo'd
+// name, without hand-editing the DB). Scoped to companyId so an Admin can
+// never touch another company's user by guessing an id. Guards against an
+// Admin demoting themselves out of the only ADMIN seat in the company —
+// same "don't lock yourself out" reasoning as removeTeamMember below.
+export async function updateTeamMember(companyId, userId, { name, role }) {
+  const existing = await prisma.user.findFirst({ where: { id: userId, companyId } });
+  if (!existing) throw httpError(404, "Team member not found");
+
+  if (role && role !== "ADMIN" && existing.role === "ADMIN") {
+    const adminCount = await prisma.user.count({ where: { companyId, role: "ADMIN" } });
+    if (adminCount <= 1) {
+      throw httpError(409, "Can't demote the only Admin in the company — promote someone else first.");
+    }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(name !== undefined ? { name } : {}),
+      ...(role !== undefined ? { role } : {}),
+    },
+  });
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role } };
+}
+
+// Admin-only — remove a teammate. Blocks removing yourself (avoids an Admin
+// locking themselves out mid-session) and removing the last remaining Admin
+// in the company. Otherwise hard-deletes the User row; if that user already
+// has activity tied to them (quotations as rep, approval steps, audit logs,
+// negotiation proposals — none of which cascade-delete), Postgres refuses
+// the delete (P2003) and that's surfaced as a friendly 409 rather than a
+// crash, same pattern as product/warehouse deletion.
+export async function removeTeamMember(companyId, userId, callerId) {
+  const existing = await prisma.user.findFirst({ where: { id: userId, companyId } });
+  if (!existing) throw httpError(404, "Team member not found");
+
+  if (userId === callerId) {
+    throw httpError(400, "You can't remove your own account.");
+  }
+
+  if (existing.role === "ADMIN") {
+    const adminCount = await prisma.user.count({ where: { companyId, role: "ADMIN" } });
+    if (adminCount <= 1) {
+      throw httpError(409, "Can't remove the only Admin in the company — promote someone else first.");
+    }
+  }
+
+  try {
+    await prisma.user.delete({ where: { id: userId } });
+  } catch (err) {
+    if (err.code === "P2003" || err.code === "P2014") {
+      throw httpError(
+        409,
+        "Can't remove this teammate — they already have quotations, approvals, or activity tied to their account."
+      );
+    }
+    throw err;
+  }
+  return { id: userId, deleted: true };
+}
+
 export async function login({ companySlug, email, password }) {
   const company = await resolveCompany(companySlug);
 

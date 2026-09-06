@@ -1,20 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Settings } from 'lucide-react';
+import { Plus, Package, Settings, Pencil, Trash2 } from 'lucide-react';
 import TopBar from '../../components/layout/TopBar';
 import Card from '../../components/ui/Card';
 import Skeleton from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import NewProductModal from './NewProductModal';
+import EditProductModal from './EditProductModal';
 import productService from '../../services/product.service';
 
 // Mockup screen 16 ("Product Dashboard") basics: catalog table + "+ New
 // Product". Screen 17 (variants/price-list detail per product) and the
-// "Manage Price fields" action aren't built yet — this covers create + list.
+// "Manage Price fields" action aren't built yet — this covers create + list
+// + edit/delete (the last two were the actual bug: this screen only ever
+// let you create a product, never fix or remove one afterwards).
 export default function ProductsList() {
   const navigate = useNavigate();
   const [products, setProducts] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState(null);
 
   const load = () => {
@@ -22,6 +27,20 @@ export default function ProductsList() {
   };
 
   useEffect(load, []);
+
+  const handleDelete = async (product) => {
+    if (!window.confirm(`Delete "${product.name}"? This can't be undone.`)) return;
+    setDeletingId(product.id);
+    setError(null);
+    try {
+      await productService.remove(product.id);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not delete that product.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <>
@@ -71,6 +90,7 @@ export default function ProductsList() {
                     <th>Unit</th>
                     <th>Tax</th>
                     <th>Margin</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -83,6 +103,29 @@ export default function ProductsList() {
                       <td className="df-text-muted">{p.unit}</td>
                       <td className="df-text-muted">{Number(p.taxRate)}%</td>
                       <td className="df-text-muted">{Number(p.marginPercent)}%</td>
+                      <td>
+                        <div className="df-row-actions">
+                          <button
+                            type="button"
+                            className="df-icon-btn"
+                            aria-label={`Edit ${p.name}`}
+                            title="Edit"
+                            onClick={() => setEditingProduct(p)}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            className="df-icon-btn df-icon-btn-danger"
+                            aria-label={`Delete ${p.name}`}
+                            title="Delete"
+                            disabled={deletingId === p.id}
+                            onClick={() => handleDelete(p)}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -97,6 +140,13 @@ export default function ProductsList() {
         onClose={() => setModalOpen(false)}
         onCreated={() => { setModalOpen(false); load(); }}
         existingProducts={products || []}
+      />
+
+      <EditProductModal
+        open={!!editingProduct}
+        product={editingProduct}
+        onClose={() => setEditingProduct(null)}
+        onUpdated={() => { setEditingProduct(null); load(); }}
       />
     </>
   );

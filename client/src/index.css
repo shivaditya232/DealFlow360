@@ -273,6 +273,18 @@ a:hover {
   color: var(--text-primary);
 }
 
+.df-btn-danger {
+  background-color: transparent;
+  border-color: var(--color-danger-200, var(--color-danger-500));
+  color: var(--color-danger-600);
+}
+
+.df-btn-danger:hover:not(:disabled) {
+  background-color: var(--color-danger-50);
+  border-color: var(--color-danger-500);
+  color: var(--color-danger-700);
+}
+
 /* Button Sizes */
 .df-btn-sm {
   height: 2.25rem;

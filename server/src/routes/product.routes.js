@@ -12,5 +12,7 @@ router.get("/", productController.list);
 // Only Admin manages the catalog itself (PS: "Admin: manages backend setup —
 // products, price lists, discount tiers, warehouses, subscription plans").
 router.post("/", authorize("ADMIN"), productController.create);
+router.patch("/:id", authorize("ADMIN"), productController.update);
+router.delete("/:id", authorize("ADMIN"), productController.remove);
 
 export default router;

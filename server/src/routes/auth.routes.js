@@ -13,5 +13,7 @@ router.post("/otp-login", authController.otpLogin);
 // OTP-verified via POST /api/otp/request + /api/otp/verify, same as signup).
 router.get("/team-members", authenticate, authorize("ADMIN"), authController.listTeamMembers);
 router.post("/team-members", authenticate, authorize("ADMIN"), authController.createTeamMember);
+router.patch("/team-members/:id", authenticate, authorize("ADMIN"), authController.updateTeamMember);
+router.delete("/team-members/:id", authenticate, authorize("ADMIN"), authController.removeTeamMember);
 
 export default router;

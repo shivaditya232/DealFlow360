@@ -58,3 +58,43 @@ export async function createProduct(companyId, data) {
     return product;
   });
 }
+
+// Admin-only — edit the catalog entry itself. Was previously write-once
+// (create only, no way to fix a typo'd price/name without hand-editing the
+// DB) — this is a straight partial update, scoped to companyId so an Admin
+// can never touch another company's product by guessing an id.
+export async function updateProduct(companyId, productId, data) {
+  const existing = await prisma.product.findFirst({ where: { id: productId, companyId } });
+  if (!existing) throw httpError(404, "Product not found");
+
+  return prisma.product.update({
+    where: { id: productId },
+    data,
+  });
+}
+
+// Admin-only — remove a product from the catalog. Hard-deletes at the DB
+// level; Product has FK relations from QuotationLine/StockLevel/
+// SubscriptionPlan/UpsellRule with no onDelete: Cascade, so Postgres itself
+// refuses the delete (P2003) once the product has been used anywhere. That's
+// treated as an expected, user-facing condition (409) rather than a crash —
+// a product that's actually been quoted/stocked isn't safe to delete outright
+// (it would corrupt existing quotations' line items), so the message tells
+// the Admin to edit it instead.
+export async function deleteProduct(companyId, productId) {
+  const existing = await prisma.product.findFirst({ where: { id: productId, companyId } });
+  if (!existing) throw httpError(404, "Product not found");
+
+  try {
+    await prisma.product.delete({ where: { id: productId } });
+  } catch (err) {
+    if (err.code === "P2003" || err.code === "P2014") {
+      throw httpError(
+        409,
+        "Can't delete this product — it's already used in one or more quotations, stock records, or subscription plans. Edit it instead, or remove those references first."
+      );
+    }
+    throw err;
+  }
+  return { id: productId, deleted: true };
+}

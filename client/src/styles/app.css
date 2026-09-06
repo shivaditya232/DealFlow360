@@ -237,6 +237,18 @@
   transform: translateY(-1px);
 }
 
+.df-icon-btn-danger:hover {
+  color: var(--color-danger-600);
+  border-color: var(--color-danger-300, var(--color-danger-500));
+  transform: translateY(-1px);
+}
+
+.df-row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
 .df-main {
   flex: 1;
   min-width: 0;

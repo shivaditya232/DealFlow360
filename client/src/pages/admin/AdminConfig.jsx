@@ -9,7 +9,10 @@ import {
   AlertTriangle,
   RefreshCw,
   Layers,
-  Percent
+  Percent,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import TopBar from '../../components/layout/TopBar';
 import Card from '../../components/ui/Card';
@@ -18,6 +21,8 @@ import Skeleton from '../../components/ui/Skeleton';
 import Button from '../../components/ui/Button';
 import configService from '../../services/config.service';
 import stockService from '../../services/stock.service';
+import warehouseService from '../../services/warehouse.service';
+import WarehouseModal from './WarehouseModal';
 
 export default function AdminConfig() {
   const [activeTab, setActiveTab] = useState('addStock'); // 'addStock' | 'warehouses' | 'products' | 'governance'
@@ -33,6 +38,11 @@ export default function AdminConfig() {
     quantity: 50,
   });
   const [addingStock, setAddingStock] = useState(false);
+
+  // Warehouse create/edit/delete
+  const [warehouseModalOpen, setWarehouseModalOpen] = useState(false);
+  const [editingWarehouse, setEditingWarehouse] = useState(null);
+  const [deletingWarehouseId, setDeletingWarehouseId] = useState(null);
 
   const loadConfig = useCallback(async () => {
     setLoading(true);
@@ -78,6 +88,21 @@ export default function AdminConfig() {
       setError(err.response?.data?.error || 'Failed to replenish stock.');
     } finally {
       setAddingStock(false);
+    }
+  };
+
+  const handleDeleteWarehouse = async (warehouse) => {
+    if (!window.confirm(`Delete warehouse "${warehouse.name}"? This can't be undone.`)) return;
+    setDeletingWarehouseId(warehouse.id);
+    setError(null);
+    try {
+      await warehouseService.remove(warehouse.id);
+      setNotice(`Warehouse "${warehouse.name}" deleted.`);
+      loadConfig();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not delete that warehouse.');
+    } finally {
+      setDeletingWarehouseId(null);
     }
   };
 
@@ -240,6 +265,16 @@ export default function AdminConfig() {
             {/* TAB 2: WAREHOUSES & INVENTORY */}
             {activeTab === 'warehouses' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="df-btn df-btn-primary df-btn-sm"
+                    onClick={() => { setEditingWarehouse(null); setWarehouseModalOpen(true); }}
+                  >
+                    <Plus size={15} /> New Warehouse
+                  </button>
+                </div>
+
                 {config?.warehouses?.map((w) => (
                   <Card key={w.id} style={{ padding: 0 }}>
                     <div className="df-card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -249,7 +284,30 @@ export default function AdminConfig() {
                           Shipping Cost Weight: {Number(w.shippingCostWeight)}
                         </div>
                       </div>
-                      <Badge variant="primary">{w.stockLevels?.length || 0} Products Stocked</Badge>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Badge variant="primary">{w.stockLevels?.length || 0} Products Stocked</Badge>
+                        <div className="df-row-actions">
+                          <button
+                            type="button"
+                            className="df-icon-btn"
+                            aria-label={`Edit ${w.name}`}
+                            title="Edit"
+                            onClick={() => { setEditingWarehouse(w); setWarehouseModalOpen(true); }}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            className="df-icon-btn df-icon-btn-danger"
+                            aria-label={`Delete ${w.name}`}
+                            title="Delete"
+                            disabled={deletingWarehouseId === w.id}
+                            onClick={() => handleDeleteWarehouse(w)}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="df-table-wrap">
@@ -448,6 +506,13 @@ export default function AdminConfig() {
           </>
         )}
       </div>
+
+      <WarehouseModal
+        open={warehouseModalOpen}
+        warehouse={editingWarehouse}
+        onClose={() => setWarehouseModalOpen(false)}
+        onSaved={() => { setWarehouseModalOpen(false); setEditingWarehouse(null); loadConfig(); }}
+      />
     </>
   );
 }

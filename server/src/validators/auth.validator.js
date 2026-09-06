@@ -41,3 +41,14 @@ export const createTeamMemberSchema = z.object({
   role: z.enum(USER_ROLES),
 });
 
+// Admin editing an existing teammate's name/role — both optional (partial
+// update), but at least one must be present. No email/password change here;
+// that's a separate "reset password" flow not built yet.
+export const updateTeamMemberSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    role: z.enum(USER_ROLES).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Provide at least one field to update",
+  });

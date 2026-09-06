@@ -26,3 +26,20 @@ export const createProductSchema = z.object({
     .optional()
     .nullable(),
 });
+
+// Edit screen — every field optional (partial update), but at least one must
+// be present or there's nothing to do. Doesn't touch the upsell relation;
+// that's managed separately (create-time only for now, same as before).
+export const updateProductSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    category: z.string().min(1).optional(),
+    basePrice: z.number().nonnegative().optional(),
+    unit: z.string().min(1).optional(),
+    taxRate: z.number().min(0).max(100).optional(),
+    marginPercent: z.number().min(0).max(100).optional(),
+    description: z.string().max(2000).optional().nullable(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Provide at least one field to update",
+  });

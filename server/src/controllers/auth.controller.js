@@ -1,4 +1,4 @@
-import { signupSchema, loginSchema, createTeamMemberSchema } from "../validators/auth.validator.js";
+import { signupSchema, loginSchema, createTeamMemberSchema, updateTeamMemberSchema } from "../validators/auth.validator.js";
 import * as authService from "../services/auth.service.js";
 
 export async function signup(req, res, next) {
@@ -25,6 +25,25 @@ export async function createTeamMember(req, res, next) {
     const data = createTeamMemberSchema.parse(req.body);
     const result = await authService.createTeamMember(req.auth.companyId, data);
     res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateTeamMember(req, res, next) {
+  try {
+    const data = updateTeamMemberSchema.parse(req.body);
+    const result = await authService.updateTeamMember(req.auth.companyId, req.params.id, data);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function removeTeamMember(req, res, next) {
+  try {
+    const result = await authService.removeTeamMember(req.auth.companyId, req.params.id, req.auth.sub);
+    res.json(result);
   } catch (err) {
     next(err);
   }

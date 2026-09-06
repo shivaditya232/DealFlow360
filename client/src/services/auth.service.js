@@ -92,6 +92,25 @@ export const authService = {
   },
 
   /**
+   * Admin-only: edit a teammate's name/role.
+   * @param {string} id
+   * @param {{ name?: string, role?: string }} payload
+   */
+  updateTeamMember: async (id, payload) => {
+    const response = await api.patch(`/auth/team-members/${id}`, payload);
+    return response.data;
+  },
+
+  /**
+   * Admin-only: remove a teammate from the company.
+   * @param {string} id
+   */
+  removeTeamMember: async (id) => {
+    const response = await api.delete(`/auth/team-members/${id}`);
+    return response.data;
+  },
+
+  /**
    * Centralized client logout
    */
   logout: () => {

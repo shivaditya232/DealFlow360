@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Pencil, Trash2 } from 'lucide-react';
 import TopBar from '../../components/layout/TopBar';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Skeleton from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import NewTeamMemberModal from './NewTeamMemberModal';
+import EditTeamMemberModal from './EditTeamMemberModal';
 import authService from '../../services/auth.service';
+import { useAuth } from '../../context/AuthContext';
 
 const ROLE_VARIANT = {
   ADMIN: 'primary',
@@ -18,9 +20,14 @@ const ROLE_VARIANT = {
 // Admin-only screen — was previously entirely missing (self-signup only
 // ever grants SALES_REP; there was no page or endpoint for an Admin to
 // create a MANAGER or FINANCE account, only hand-editing the database).
+// Edit/Remove were the actual bug fixed here: this screen only ever let you
+// create a teammate, never fix their role or take them off the team.
 export default function TeamPage() {
+  const { user } = useAuth();
   const [members, setMembers] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
   const [error, setError] = useState(null);
 
   const load = () => {
@@ -28,6 +35,20 @@ export default function TeamPage() {
   };
 
   useEffect(load, []);
+
+  const handleRemove = async (member) => {
+    if (!window.confirm(`Remove "${member.name}" from the team? This can't be undone.`)) return;
+    setRemovingId(member.id);
+    setError(null);
+    try {
+      await authService.removeTeamMember(member.id);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not remove that team member.');
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   return (
     <>
@@ -68,16 +89,46 @@ export default function TeamPage() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {members.map((m) => (
-                    <tr key={m.id}>
-                      <td style={{ fontWeight: 600 }}>{m.name}</td>
-                      <td className="df-text-muted">{m.email}</td>
-                      <td><Badge variant={ROLE_VARIANT[m.role] || 'neutral'}>{m.role.replace('_', ' ')}</Badge></td>
-                    </tr>
-                  ))}
+                  {members.map((m) => {
+                    const isSelf = m.id === user?.id;
+                    return (
+                      <tr key={m.id}>
+                        <td style={{ fontWeight: 600 }}>
+                          {m.name}
+                          {isSelf && <span className="df-text-muted" style={{ fontWeight: 400 }}> (you)</span>}
+                        </td>
+                        <td className="df-text-muted">{m.email}</td>
+                        <td><Badge variant={ROLE_VARIANT[m.role] || 'neutral'}>{m.role.replace('_', ' ')}</Badge></td>
+                        <td>
+                          <div className="df-row-actions">
+                            <button
+                              type="button"
+                              className="df-icon-btn"
+                              aria-label={`Edit ${m.name}`}
+                              title="Edit"
+                              onClick={() => setEditingMember(m)}
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              className="df-icon-btn df-icon-btn-danger"
+                              aria-label={`Remove ${m.name}`}
+                              title={isSelf ? "You can't remove your own account" : 'Remove'}
+                              disabled={isSelf || removingId === m.id}
+                              onClick={() => handleRemove(m)}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -89,6 +140,13 @@ export default function TeamPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={() => { setModalOpen(false); load(); }}
+      />
+
+      <EditTeamMemberModal
+        open={!!editingMember}
+        member={editingMember}
+        onClose={() => setEditingMember(null)}
+        onUpdated={() => { setEditingMember(null); load(); }}
       />
     </>
   );
