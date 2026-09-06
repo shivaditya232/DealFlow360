@@ -148,8 +148,22 @@ async function consolidateBackorders(companyId, productId, stockLevel) {
 /**
  * If every FulfillmentSplit for every line of the quotation has fulfilledAt set,
  * transition the Quotation to FULFILLED.
+ *
+ * Exported so fulfillment.service.js can also call this right after the
+ * initial confirm-time split creation (triggerFulfillment) — this used to
+ * ONLY ever be called from consolidateBackorders below, so a quotation that
+ * was fully in stock from the start (never went through a backorder at all)
+ * never got marked FULFILLED and stayed stuck on CONFIRMED forever. Guarded
+ * against re-marking an already-FULFILLED quotation so calling it from two
+ * different call sites can't double up the audit log / broadcast.
  */
-async function checkAndMarkFulfilled(companyId, quotationId) {
+export async function checkAndMarkFulfilled(companyId, quotationId, triggeredBy = "SYSTEM:BACKORDER_CONSOLIDATION") {
+  const quotation = await prisma.quotation.findUnique({
+    where: { id: quotationId },
+    select: { status: true },
+  });
+  if (!quotation || quotation.status === "FULFILLED") return;
+
   const openSplits = await prisma.fulfillmentSplit.count({
     where: {
       quotationLine: { quotationId },
@@ -168,7 +182,7 @@ async function checkAndMarkFulfilled(companyId, quotationId) {
       entityType: "Quotation",
       entityId: quotationId,
       action: "FULFILLED",
-      metadata: { triggeredBy: "SYSTEM:BACKORDER_CONSOLIDATION" },
+      metadata: { triggeredBy },
     });
 
     broadcast(quotationId, { event: "QUOTATION_FULFILLED", quotationId });

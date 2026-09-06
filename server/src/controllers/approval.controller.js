@@ -13,11 +13,12 @@ export async function listPendingApprovals(req, res, next) {
 
 export async function actOnApproval(req, res, next) {
   try {
-    const { sub: approverId, companyId } = req.auth;
+    const { sub: approverId, companyId, role } = req.auth;
     const data = approvalActSchema.parse(req.body);
     const result = await approvalService.actOnApproval(
       approverId,
       companyId,
+      role,
       req.params.quotationId,
       data
     );

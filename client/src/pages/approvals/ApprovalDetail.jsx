@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge';
 import Skeleton from '../../components/ui/Skeleton';
 import RadialGauge from '../../components/charts/RadialGauge';
 import approvalService from '../../services/approval.service';
+import { useAuth } from '../../context/AuthContext';
 import configService from '../../services/config.service';
 import { resolveRiskLabel, RISK_COLORS } from '../../utils/risk';
 
@@ -22,6 +23,7 @@ function StepDot({ status }) {
 export default function ApprovalDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [detail, setDetail] = useState(null);
   const [limits, setLimits] = useState(null);
   const [reasonFor, setReasonFor] = useState(null); // 'REJECT' | 'RETURN' | null
@@ -39,6 +41,14 @@ export default function ApprovalDetail() {
   const risk = detail && limits ? resolveRiskLabel(detail.blendedRiskScore, limits.approvalChainRules) : null;
 
   const pendingStep = detail?.approvalSteps.find((s) => s.status === 'PENDING');
+  // Bug fix: this page used to show Approve/Reject/Return for whatever step
+  // was PENDING regardless of the viewer's own role — so a Manager opening a
+  // quotation whose current step needed Finance (or vice versa) saw the same
+  // action buttons as the actual approver. The server now rejects that
+  // (approval.service.js locks a step to its own approverRole), but the
+  // buttons shouldn't even appear for a role that can't act on this step.
+  // ADMIN keeps the same cross-role access it already has server-side.
+  const canActOnPendingStep = pendingStep && (role === 'ADMIN' || pendingStep.approverRole === role);
 
   const act = async (action) => {
     if ((action === 'REJECT' || action === 'RETURN') && reasonFor !== action) {
@@ -172,7 +182,7 @@ export default function ApprovalDetail() {
                 )}
               </Card>
 
-              {pendingStep && (
+              {pendingStep && canActOnPendingStep && (
                 <Card>
                   <div className="df-card-title df-mt-8" style={{ marginBottom: 4 }}>
                     Awaiting {pendingStep.approverRole === 'FINANCE' ? 'Finance' : 'Sales Manager'} decision
@@ -207,6 +217,17 @@ export default function ApprovalDetail() {
                     >
                       <XIcon size={14} /> {reasonFor === 'REJECT' ? 'Confirm Reject' : 'Reject'}
                     </button>
+                  </div>
+                </Card>
+              )}
+
+              {pendingStep && !canActOnPendingStep && (
+                <Card>
+                  <div className="df-card-title df-mt-8" style={{ marginBottom: 4 }}>
+                    Awaiting {pendingStep.approverRole === 'FINANCE' ? 'Finance' : 'Sales Manager'} decision
+                  </div>
+                  <div className="df-text-sm df-text-muted df-mt-8">
+                    This step needs {pendingStep.approverRole === 'FINANCE' ? 'a Finance' : 'a Sales Manager'} sign-off — not yours to act on.
                   </div>
                 </Card>
               )}

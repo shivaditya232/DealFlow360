@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import { logAction } from "./audit.service.js";
 import { broadcast } from "../sockets/index.js";
+import { checkAndMarkFulfilled } from "./stock.service.js";
 
 // ── Billing cycle helpers ──────────────────────────────────────────────────────
 
@@ -68,6 +69,12 @@ export async function triggerFulfillment(companyId, quotationId) {
       metadata: { reason: "Insufficient stock at time of confirmation" },
     });
     broadcast(quotationId, { event: "BACKORDER_CREATED", quotationId });
+  } else {
+    // Bug fix: every line shipped in full right away — nothing here ever
+    // marked the quotation FULFILLED before, since that only happened
+    // inside stock.service.js's backorder-consolidation path. A quotation
+    // with no backorder at all used to stay stuck on CONFIRMED forever.
+    await checkAndMarkFulfilled(companyId, quotationId, "SYSTEM:INITIAL_FULFILLMENT");
   }
 }
 

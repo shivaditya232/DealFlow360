@@ -61,8 +61,18 @@ export async function listPendingApprovals(approverId, companyId, role) {
  * APPROVE: marks step done, advances chain or confirms quotation.
  * REJECT:  closes quotation as REJECTED, notifies all watchers.
  * RETURN:  moves quotation back to NEGOTIATING for rep to revise.
+ *
+ * Bug fix: this used to find the current pending step and act on it with no
+ * check at all that the CALLER's own role matched that step's approverRole.
+ * approval.routes.js authorizes MANAGER, FINANCE and ADMIN onto this endpoint
+ * as a group, so on a high-discount quotation with both a Manager step and a
+ * Finance step queued, a MANAGER could hit this route and approve/reject the
+ * Finance step too (and vice versa) — the two supposedly separate sign-offs
+ * were both reachable by either role. Same ADMIN carve-out as
+ * listPendingApprovals above: ADMIN can act on any pending step regardless
+ * of its approverRole, everyone else is locked to their own role's step.
  */
-export async function actOnApproval(approverId, companyId, quotationId, { action, reason }) {
+export async function actOnApproval(approverId, companyId, role, quotationId, { action, reason }) {
   const quotation = await prisma.quotation.findFirst({
     where: { id: quotationId, companyId, status: "PENDING_APPROVAL" },
     include: {
@@ -72,13 +82,19 @@ export async function actOnApproval(approverId, companyId, quotationId, { action
 
   if (!quotation) throw httpError(404, "Quotation not found or not pending approval");
 
-  // Find the current active step for this approver's role
+  // Find the current active step (lowest-order PENDING step in the chain)
   const currentStep = quotation.approvalSteps.find(
     (s) => s.status === "PENDING" && s.approverRole !== null
   );
 
   if (!currentStep) {
     throw httpError(409, "No pending approval step found for this quotation");
+  }
+
+  // Lock the step to its own approverRole — ADMIN is the only role allowed
+  // to act across roles.
+  if (role !== "ADMIN" && currentStep.approverRole !== role) {
+    throw httpError(403, `This step needs ${currentStep.approverRole} approval — not yours to act on`);
   }
 
   const now = new Date();

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FileText, ShoppingBag, Clock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import portalService from '../../services/portal.service';
+import { getSocket } from '../../lib/socket';
 import PortalStatCard from './PortalStatCard';
 import PortalSectionHeader from './PortalSectionHeader';
 import PortalEmptyState from './PortalEmptyState';
@@ -28,27 +29,71 @@ export default function PortalOverview({ onNavigate, onOpenQuotation }) {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const quotationIdsRef = useRef([]);
+
+  const load = useCallback(() => {
+    return portalService.listQuotations()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setQuotations(list);
+        setError(null);
+        return list;
+      })
+      .catch((err) => {
+        setError(err.response?.data?.error || err.friendlyMessage || 'Failed to load your account summary.');
+        return [];
+      });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    portalService.listQuotations()
-      .then((data) => {
-        if (!cancelled) {
-          setQuotations(Array.isArray(data) ? data : []);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.response?.data?.error || err.friendlyMessage || 'Failed to load your account summary.');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    load().finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [load]);
+
+  // Bug fix: this page only ever fetched once on mount, so a "Fulfilled
+  // Orders" count computed from quotation.status never moved even after a
+  // backorder actually resolved (admin replenishes stock → stock.service.js
+  // consolidates the backorder and flips the quotation to FULFILLED) —
+  // nothing told this page to refetch, so the stat sat stale until a full
+  // page reload. Every other live-updating screen in the app joins the
+  // socket room for ONE known quotationId (useQuotationSocket); this page
+  // shows the customer's whole quotation list at once, so it joins every
+  // quotation's room and refetches the list on any update, same pattern
+  // generalized to many IDs instead of one.
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+
+    const joinAll = () => {
+      for (const id of quotationIdsRef.current) socket.emit('join', { quotationId: id });
+    };
+    const handleUpdate = () => { load(); };
+
+    socket.on('connect', joinAll);
+    socket.on('quotation:update', handleUpdate);
+    if (socket.connected) joinAll();
+
+    return () => {
+      for (const id of quotationIdsRef.current) socket.emit('leave', { quotationId: id });
+      socket.off('connect', joinAll);
+      socket.off('quotation:update', handleUpdate);
+    };
+  }, [load]);
+
+  // Keep the joined-room list in sync as quotations load/change, and join
+  // any newly-seen ids immediately (covers the case where the socket was
+  // already connected before this list existed).
+  useEffect(() => {
+    const nextIds = quotations.map((q) => q.id).filter(Boolean);
+    const socket = getSocket();
+    const previousIds = new Set(quotationIdsRef.current);
+    for (const id of nextIds) {
+      if (!previousIds.has(id) && socket.connected) socket.emit('join', { quotationId: id });
+    }
+    quotationIdsRef.current = nextIds;
+  }, [quotations]);
 
   const greeting = () => {
     const h = new Date().getHours();
