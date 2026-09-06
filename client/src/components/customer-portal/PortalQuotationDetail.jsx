@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Calendar, MessageSquare, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, MessageSquare, ChevronRight, CheckCircle } from 'lucide-react';
 import portalService from '../../services/portal.service';
 import useQuotationSocket from '../../hooks/useQuotationSocket';
 import QuotationStatusBadge from './QuotationStatusBadge';
@@ -23,6 +23,8 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [actionPending, setActionPending] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -36,6 +38,19 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
       })
       .finally(() => setLoading(false));
   }, [quotationId]);
+
+  const handleAccept = () => {
+    setActionError(null);
+    setActionPending(true);
+    portalService.acceptQuotation(quotationId)
+      .then(() => {
+        load();
+      })
+      .catch((err) => {
+        setActionError(err.response?.data?.error || err.friendlyMessage || 'Failed to accept quotation.');
+      })
+      .finally(() => setActionPending(false));
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -95,7 +110,27 @@ export default function PortalQuotationDetail({ quotationId, onBack }) {
             </p>
           </div>
         </div>
-        <QuotationStatusBadge status={status} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <QuotationStatusBadge status={status} />
+          {negotiable && !currentProposal && (
+            <button
+              onClick={handleAccept}
+              disabled={actionPending}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.45rem 0.85rem', borderRadius: '8px',
+                border: '1px solid var(--portal-accent-soft-border)',
+                backgroundColor: 'var(--portal-accent-soft-bg)',
+                color: 'var(--portal-accent-strong)',
+                fontSize: '0.8125rem', fontWeight: '600',
+                cursor: actionPending ? 'default' : 'pointer',
+                opacity: actionPending ? 0.6 : 1,
+              }}
+            >
+              <CheckCircle size={14} /> {actionPending ? 'Accepting…' : 'Accept & Confirm'}
+            </button>
+          )}
+        </div>
       </div>
 
       {actionError && (
