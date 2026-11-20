@@ -4,6 +4,8 @@ An Intelligent, Self-Governing Sales Operations Platform — Odoo Hackathon 2026
 
 Handles multi-tier discount governance with automated approval routing, live upsell/cross-sell recommendations, multi-warehouse fulfillment splitting with backorder handling, hybrid billing (one-time + recurring subscriptions on the same order), deal health monitoring, and customer-facing portal negotiation on live quotations.
 
+**Live link :**[Watch on Youtube](https://youtu.be/unIG7MLNmmE)
+
 ## Tech Stack (finalized)
 
 - Frontend: React (Vite) — `client/`
